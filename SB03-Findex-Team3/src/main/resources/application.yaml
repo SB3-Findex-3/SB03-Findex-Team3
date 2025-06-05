@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: findex
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/findex
+    username: findex_user
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    generate-ddl: false
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        use_sql_comments: true
+
+server:
+  port: 8080

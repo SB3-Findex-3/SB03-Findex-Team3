@@ -1,6 +1,7 @@
 package com.sprint.findex.service.basic;
 
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
+import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
@@ -24,12 +25,23 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public IndexDataDto create(IndexDataCreateRequest request) {
         IndexInfo indexInfo = indexInfoRepository.findById(request.indexInfoId())
-            .orElseThrow(() -> new IllegalArgumentException("IndexInfo not found"));
+            .orElseThrow(() -> new IllegalArgumentException("지수 정보 ID가 존재하지 않습니다."));
 
         IndexData indexData = IndexData.from(indexInfo, request, SourceType.USER);
         IndexData savedIndexData = indexDataRepository.save(indexData);
 
         return IndexDataMapper.toDto(savedIndexData);
 
+    }
+
+    @Override
+    @Transactional
+    public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
+        IndexData indexData = indexDataRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("지수 데이터 ID가 존재하지 않습니다."));
+
+        indexData.update(request);
+        IndexData savedIndexData = indexDataRepository.save(indexData);
+        return IndexDataMapper.toDto(savedIndexData);
     }
 }

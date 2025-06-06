@@ -1,6 +1,7 @@
 package com.sprint.findex.entity;
 
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
+import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -97,5 +98,36 @@ public class IndexData {
             request.marketPrice(), request.closingPrice(), request.highPrice(),
             request.lowPrice(), request.versus(), request.fluctuationRate(), request.tradingQuantity(),
             request.tradingPrice(), request.marketTotalAmount());
+    }
+
+    public void update(IndexDataUpdateRequest request) {
+        if (request.marketPrice() != null && !request.marketPrice().equals(this.marketPrice)) {
+            this.marketPrice = request.marketPrice();
+        }
+        if (request.closingPrice() != null && !request.closingPrice().equals(this.closingPrice)) {
+            this.closingPrice = request.closingPrice();
+        }
+        if (request.highPrice() != null && !request.highPrice().equals(this.highPrice)) {
+            this.highPrice = request.highPrice();
+        }
+        if (request.lowPrice() != null && !request.lowPrice().equals(this.lowPrice)) {
+            this.lowPrice = request.lowPrice();
+        }
+        if (request.versus() != null && !request.versus().equals(this.versus)) {
+            this.versus = request.versus();
+        }
+        if (request.fluctuationRate() != null && !request.fluctuationRate().equals(this.fluctuationRate)) {
+            this.fluctuationRate = request.fluctuationRate();
+        }
+        if (request.tradingQuantity() != null && !request.tradingQuantity().equals(this.tradingQuantity)) {
+            this.tradingQuantity = request.tradingQuantity();
+        }
+        if (request.tradingPrice() != null && !request.tradingPrice().equals(this.tradingPrice)) {
+            this.tradingPrice = request.tradingPrice();
+        }
+        if (request.marketTotalAmount() != null && !request.marketTotalAmount()
+            .equals(this.marketTotalAmount)) {
+            this.marketTotalAmount = request.marketTotalAmount();
+        }
     }
 }

@@ -25,23 +25,31 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public IndexDataDto create(IndexDataCreateRequest request) {
         IndexInfo indexInfo = indexInfoRepository.findById(request.indexInfoId())
-            .orElseThrow(() -> new IllegalArgumentException("지수 정보 ID가 존재하지 않습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("참조하는 지수 정보를 찾을 수 없음"));
 
         IndexData indexData = IndexData.from(indexInfo, request, SourceType.USER);
         IndexData savedIndexData = indexDataRepository.save(indexData);
 
         return IndexDataMapper.toDto(savedIndexData);
-
     }
 
     @Override
     @Transactional
     public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
         IndexData indexData = indexDataRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("지수 데이터 ID가 존재하지 않습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("수정할 지수 데이터를 찾을 수 없음"));
 
         indexData.update(request);
         IndexData savedIndexData = indexDataRepository.save(indexData);
         return IndexDataMapper.toDto(savedIndexData);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id){
+        IndexData indexData = indexDataRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("삭제할 지수 데이터를 찾을 수 없음"));
+
+        indexDataRepository.delete(indexData);
     }
 }

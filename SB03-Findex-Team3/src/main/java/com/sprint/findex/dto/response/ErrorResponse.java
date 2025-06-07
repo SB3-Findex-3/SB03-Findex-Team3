@@ -1,5 +1,83 @@
 package com.sprint.findex.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.ZonedDateTime;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Getter
+@Schema(description = "에러 응답")
 public class ErrorResponse {
 
+    @Schema(
+        description = "에러 발생 시간",
+        type = "string",
+        format = "date-time",
+        example = "2025-03-06T05:39:06.152068Z"
+    )
+    private ZonedDateTime timestamp;
+
+    @Schema(
+        description = "HTTP 상태 코드",
+        example = "400"
+    )
+    private Integer status;
+
+    @Schema(
+        description = "에러 메시지",
+        example = "잘못된 요청입니다."
+    )
+    private String message;
+
+    @Schema(
+        description = "에러 상세 내용",
+        example = "부서 코드는 필수입니다."
+    )
+    private String details;
+
+    // timestamp를 현재 시간으로 자동 설정하는 생성자
+    public ErrorResponse(Integer status, String message, String details) {
+        this.timestamp = ZonedDateTime.now();
+        this.status = status;
+        this.message = message;
+        this.details = details;
+    }
+
+    // 간단한 에러 응답용
+    public ErrorResponse(Integer status, String message) {
+        this.timestamp = ZonedDateTime.now();
+        this.status = status;
+        this.message = message;
+        this.details = null;
+    }
+
+    public void setTimestamp(ZonedDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
+
+    @Override
+    public String toString() {
+        return "ErrorResponse{" +
+            "timestamp=" + timestamp +
+            ", status=" + status +
+            ", message='" + message + '\'' +
+            ", details='" + details + '\'' +
+            '}';
+    }
 }

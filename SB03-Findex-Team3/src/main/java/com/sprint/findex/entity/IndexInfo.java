@@ -1,5 +1,6 @@
 package com.sprint.findex.entity;
 
+import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,6 +51,18 @@ public class IndexInfo extends BaseEntity {
         this.baseIndex = baseIndex;
         this.sourceType = sourceType;
         this.favorite = favorite;
+    }
+
+    public static IndexInfo create(IndexInfoCreateCommand command) {
+        return new IndexInfo(
+            command.indexClassification(),
+            command.indexName(),
+            command.employedItemsCount(),
+            command.basePointInTime(),
+            command.baseIndex(),
+            command.sourceType(),
+            command.favorite()
+        );
     }
 
     public void updateIndexClassification(String indexClassification) {

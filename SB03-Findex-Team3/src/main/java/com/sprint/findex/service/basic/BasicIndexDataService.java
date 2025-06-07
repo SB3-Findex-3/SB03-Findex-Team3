@@ -10,6 +10,8 @@ import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,5 +53,17 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("삭제할 지수 데이터를 찾을 수 없음"));
 
         indexDataRepository.delete(indexData);
+    }
+
+    @Transactional
+    @Override
+    public List<IndexDataDto> findAll(Long indexInfoId, LocalDate baseDateFrom,
+        LocalDate baseDateTo) {
+        List<IndexData> indexDataList = indexDataRepository
+            .findByIndexInfo_IdAndBaseDateBetween(indexInfoId, baseDateFrom, baseDateTo);
+
+        return indexDataList.stream()
+            .map(IndexDataMapper::toDto)
+            .toList();
     }
 }

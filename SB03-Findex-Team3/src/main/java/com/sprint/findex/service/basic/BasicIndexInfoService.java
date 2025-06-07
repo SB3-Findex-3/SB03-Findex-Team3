@@ -1,6 +1,8 @@
 package com.sprint.findex.service.basic;
 
 import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.request.IndexInfoCreateCommand;
+import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
@@ -30,8 +32,57 @@ public class BasicIndexInfoService implements IndexInfoService {
     private final IndexInfoRepository indexInfoRepository;
 
 
-    // 지수 정보 아이디로 조회
     @Override
+    @Transactional
+    public IndexInfoDto createIndexInfo(IndexInfoCreateCommand command) {
+        IndexInfo indexInfo = IndexInfo.create(command);
+        indexInfoRepository.save(indexInfo);
+
+        return indexInfoMapper.toDto(indexInfo);
+    }
+
+    @Override
+    @Transactional
+    public IndexInfo createIndexInfoFromApi(IndexInfoCreateCommand command) {
+        IndexInfo indexInfo = IndexInfo.create(command);
+        indexInfoRepository.save(indexInfo);
+
+        return indexInfo;
+    }
+
+    @Override
+    @Transactional
+    public IndexInfoDto updateIndexInfo(Long id, IndexInfoUpdateRequest updateDto){
+        IndexInfo indexInfo = indexInfoRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("No index info found with id: " + id));
+
+        if(updateDto.employedItemsCount() != null && !updateDto.employedItemsCount().equals(indexInfo.getEmployedItemsCount())){
+            indexInfo.updateEmployedItemsCount(updateDto.employedItemsCount());
+        }
+
+        if(updateDto.basePointInTime() != null && !updateDto.basePointInTime().equals(indexInfo.getBasePointInTime())){
+            indexInfo.updateBasePointInTime(updateDto.basePointInTime());
+        }
+
+        if(updateDto.baseIndex() != null && !updateDto.baseIndex().equals(indexInfo.getBaseIndex())){
+            indexInfo.updateBaseIndex(updateDto.baseIndex());
+        }
+
+        if(!updateDto.favorite() == indexInfo.isFavorite()){
+            indexInfo.updateFavorite(updateDto.favorite());
+        }
+
+        return indexInfoMapper.toDto(indexInfo);
+    }
+
+    @Override
+    @Transactional
+    public void deleteIndexInfo(Long id) {
+        indexInfoRepository.deleteById(id);
+    }
+
+
+    // 지수 정보 아이디로 조회
     @Transactional(readOnly = true)
     public IndexInfoDto findById(Long id) {
 
@@ -44,7 +95,6 @@ public class BasicIndexInfoService implements IndexInfoService {
 
 
     // 지수 목록 조회 (페이지네이션)
-    @Override
     @Transactional(readOnly = true)
     public CursorPageResponseIndexInfoDto findIndexInfoByCursor(IndexInfoSearchDto searchDto) {
 
@@ -70,7 +120,6 @@ public class BasicIndexInfoService implements IndexInfoService {
     }
 
     // 지수 정보 요약 목록 조회
-    @Override
     public List<IndexInfoSummaryDto> findIndexInfoSummary() {
         return indexInfoRepository.findAllByOrderByIdAsc().stream()
             .map(indexInfo -> new IndexInfoSummaryDto(

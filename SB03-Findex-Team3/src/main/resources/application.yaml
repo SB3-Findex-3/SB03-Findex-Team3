@@ -19,5 +19,9 @@ spring:
         highlight_sql: true
         use_sql_comments: true
 
+api:
+  data:
+    service-key: "H8VBVtPqAX70uoXhe4lgVybO8aqvgbVNMP09lt3dSBz61nMlcPwDIKIQjgtCFxqnFn0pYgqEce7kOZk4UlVdhw=="
+    base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
 server:
   port: 8080

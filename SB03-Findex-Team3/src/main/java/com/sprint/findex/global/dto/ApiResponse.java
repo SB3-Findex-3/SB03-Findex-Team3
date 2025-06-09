@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-
-@JsonIgnoreProperties(ignoreUnknown = true)  // 알 수 없는 필드 무시
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ApiResponse {
 
     @JsonProperty("response")
@@ -14,7 +13,6 @@ public class ApiResponse {
     public ResponseData getResponse() { return response; }
     public void setResponse(ResponseData response) { this.response = response; }
 
-    // 편의 메서드
     public Header getHeader() {
         return response != null ? response.getHeader() : null;
     }
@@ -89,27 +87,21 @@ public class ApiResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class StockIndexItem {
 
-        // 지수 분류명
         @JsonProperty("idxCsf")
         private String indexClassification;
 
-        // 지수명
         @JsonProperty("idxNm")
         private String indexName;
 
-        // 채용 종목 수
         @JsonProperty("epyItmsCnt")
         private String employedItemsCount;
 
-        // 기준 시점
         @JsonProperty("basPntm")
         private String basePointTime;
 
-        // 기준 지수
         @JsonProperty("basIdx")
         private String baseIndex;
 
-        // Getter and Setter
         public String getIndexClassification() {
             return indexClassification;
         }

@@ -24,12 +24,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
 public class BasicIndexInfoService implements IndexInfoService {
 
-    private final IndexInfoMapper indexInfoMapper;
     private final IndexInfoRepository indexInfoRepository;
+    private final IndexInfoMapper indexInfoMapper;
 
 
     @Override
@@ -72,7 +72,6 @@ public class BasicIndexInfoService implements IndexInfoService {
     public void deleteIndexInfo(Long id) {
         indexInfoRepository.deleteById(id);
     }
-
 
     // 지수 정보 아이디로 조회
     @Transactional(readOnly = true)
@@ -183,5 +182,4 @@ public class BasicIndexInfoService implements IndexInfoService {
         log.debug("IndexInfoService: 커서 생성 -> sortField: {}, cursorValue: {}", sortField, cursorValue);
         return cursorValue;
     }
-
 }

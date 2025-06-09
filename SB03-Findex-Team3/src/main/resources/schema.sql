@@ -10,14 +10,12 @@ CREATE TABLE index_info
     index_name           VARCHAR(240)     NOT NULL,
     employed_items_count INT              NOT NULL,
     base_point_in_time   DATE             NOT NULL,
-    base_index           INT    NOT NULL, -- 변경됨
+    base_index           DECIMAL(10,2)    NOT NULL,
     source_type          VARCHAR(10)      NOT NULL,
     favorite             BOOLEAN          NOT NULL,
     UNIQUE (index_classification, index_name),
     CONSTRAINT chk_source_type CHECK (source_type IN ('USER', 'OPEN_API'))
 );
-
-
 
 CREATE TABLE sync_job
 (
@@ -62,17 +60,3 @@ CREATE TABLE index_data
     FOREIGN KEY (index_info_id) REFERENCES index_info (id) ON DELETE CASCADE,
     CONSTRAINT chk_source_type CHECK (source_type IN ('USER', 'OPEN_API'))
 );
-
-INSERT INTO index_info (
-    id,
-    index_name,
-    index_classification,
-    employed_items_count,
-    base_point_in_time,
-    base_index,
-    source_type,
-    favorite
-)
-VALUES
-    (1, '코스피', 'KOSPI', 200, '2023-01-01', 1000.02, 'OPEN_API', false),
-    (2, '코스닥', 'KOSDAQ', 150, '2023-01-01', 95.190, 'OPEN_API', false);

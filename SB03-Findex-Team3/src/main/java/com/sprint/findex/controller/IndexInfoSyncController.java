@@ -35,7 +35,7 @@ public class IndexInfoSyncController {
     private final IndexInfoRepository indexInfoRepository;
 
     // 지수 정보 비동기 동기화 실행 (WebClient 비동기 방식)
-    @PostMapping("/openapi")
+    @PostMapping
     public Mono<ResponseEntity<String>> syncIndexInfoAsync(HttpServletRequest request) {
         // ip 주소 받아오기~
         String clientIp = IpUtil.getClientIp(request);

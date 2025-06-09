@@ -2,6 +2,7 @@ package com.sprint.findex.dto.response;
 
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.SourceType;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Builder;
 
@@ -12,7 +13,7 @@ public record IndexInfoDto(
     String indexName,
     int employedItemsCount,
     LocalDate basePointInTime,
-    int baseIndex,
+    BigDecimal baseIndex,
     SourceType sourceType,
     Boolean favorite
 ) {

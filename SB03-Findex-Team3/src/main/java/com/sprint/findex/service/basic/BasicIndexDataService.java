@@ -106,19 +106,19 @@ public class BasicIndexDataService implements IndexDataService {
             .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public CursorPageResponseIndexData<IndexDataDto> findByCursor(IndexDataQueryParams params) {
-        int pageSize =
-            params.size() != null && params.size() > 0 ? params.size() : DEFAULT_PAGE_SIZE;
+        int pageSize = (params.size() != null && params.size() > 0) ? params.size() : DEFAULT_PAGE_SIZE;
 
-        Pageable pageable = resolvePageable(params); // 페이징과 정렬 한 번에 처리
-        var spec = IndexDataSpecifications.withFilters(params);
+        Pageable pageable = resolvePageable(params);
+        var fullSpec = IndexDataSpecifications.withFilters(params);
+        var countSpec = IndexDataSpecifications.withFilters(params.withoutCursor());
 
-        Page<IndexData> pageResult = indexDataRepository.findAll(spec, pageable);
+        Page<IndexData> pageResult = indexDataRepository.findAll(fullSpec, pageable);
         List<IndexData> rawResults = pageResult.getContent();
-        boolean hasNext = rawResults.size() > pageSize;
 
+        boolean hasNext = rawResults.size() > pageSize;
         if (hasNext) {
             rawResults = rawResults.subList(0, pageSize);
         }
@@ -130,9 +130,19 @@ public class BasicIndexDataService implements IndexDataService {
         String nextCursor = buildCursor(rawResults, params.sortField());
         String nextIdAfter = buildIdCursor(rawResults);
 
-        return new CursorPageResponseIndexData<>(content, nextCursor, nextIdAfter, pageSize,
-            pageResult.getTotalElements(), hasNext);
+        // 정확한 총 개수 계산
+        long totalCount = indexDataRepository.count(countSpec);
+
+        return new CursorPageResponseIndexData<>(
+            content,
+            nextCursor,
+            nextIdAfter,
+            pageSize,
+            totalCount,
+            hasNext
+        );
     }
+
 
     private String buildCursor(List<IndexData> rawResults, String sortField) {
         if (rawResults.isEmpty())

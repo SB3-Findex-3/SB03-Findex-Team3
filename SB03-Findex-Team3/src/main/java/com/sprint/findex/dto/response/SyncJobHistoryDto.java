@@ -1,6 +1,6 @@
 package com.sprint.findex.dto.response;
 
-import com.sprint.findex.entity.SyncJob;
+import com.sprint.findex.entity.SyncJobHistory;
 import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;
 import java.time.LocalDate;
@@ -9,7 +9,7 @@ import lombok.Builder;
 
 
 @Builder
-public record SyncJobDto(
+public record SyncJobHistoryDto(
     Long id,
     SyncJobType jobType,          // ex: INDEX_DATA
     Long indexInfoId,             // ex: 1
@@ -19,8 +19,8 @@ public record SyncJobDto(
     SyncJobResult result
 ) {
 
-    private static SyncJobDto fromSyncJob(SyncJob syncJob, LocalDate targetDate) {
-        return SyncJobDto.builder()
+    private static SyncJobHistoryDto fromSyncJob(SyncJobHistory syncJob, LocalDate targetDate) {
+        return SyncJobHistoryDto.builder()
             .id(syncJob.getId())
             .jobType(syncJob.getJobType())
             .indexInfoId(syncJob.getIndexInfo().getId())
@@ -31,11 +31,11 @@ public record SyncJobDto(
             .build();
     }
 
-    public static SyncJobDto fromIndexInfo(SyncJob syncJob) {
+    public static SyncJobHistoryDto fromIndexInfo(SyncJobHistory syncJob) {
         return fromSyncJob(syncJob, null);
     }
 
-    public static SyncJobDto fromIndexData(SyncJob syncJob) {
+    public static SyncJobHistoryDto fromIndexData(SyncJobHistory syncJob) {
         return fromSyncJob(syncJob, syncJob.getTargetDate());
     }
 }

@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "sync_job")
 @Getter
 @Entity
-public class SyncJob extends BaseEntity {
+public class SyncJobHistory extends BaseEntity {
 
 
     @Enumerated(EnumType.STRING)
@@ -27,7 +27,7 @@ public class SyncJob extends BaseEntity {
     private SyncJobType jobType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "index_info_id")
+    @JoinColumn(name = "index_info_id", nullable = false)
     private IndexInfo indexInfo;
 
     @Column(name = "target_date", nullable = false)
@@ -43,7 +43,7 @@ public class SyncJob extends BaseEntity {
     @Column(name = "result", length = 10, nullable = false)
     private SyncJobResult jobResult;
 
-    public SyncJob(SyncJobType jobType, IndexInfo indexInfo, LocalDate targetDate,
+    public SyncJobHistory(SyncJobType jobType, IndexInfo indexInfo, LocalDate targetDate,
         String worker, OffsetDateTime jobTime, SyncJobResult jobResult) {
         this.jobType = jobType;
         this.indexInfo = indexInfo;
@@ -53,8 +53,8 @@ public class SyncJob extends BaseEntity {
         this.jobResult = jobResult;
     }
 
-    public static SyncJob create(SyncJobType jobType, IndexInfo indexInfo, LocalDate targetDate,
+    public static SyncJobHistory create(SyncJobType jobType, IndexInfo indexInfo, LocalDate targetDate,
         String worker, OffsetDateTime jobTime, SyncJobResult jobResult) {
-        return new SyncJob(jobType, indexInfo, targetDate, worker, jobTime, jobResult);
+        return new SyncJobHistory(jobType, indexInfo, targetDate, worker, jobTime, jobResult);
     }
 }

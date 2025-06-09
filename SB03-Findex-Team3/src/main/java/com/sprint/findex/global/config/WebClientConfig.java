@@ -24,7 +24,6 @@ public class WebClientConfig {
                     .addHandlerLast(new io.netty.handler.timeout.WriteTimeoutHandler(30));
             });
 
-        // 근데 대량의 JSON파일 요청할 떄는 메모리 버퍼 설정이 필요할 수도 있다고 함
         return WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .build();

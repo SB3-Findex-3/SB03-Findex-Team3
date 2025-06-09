@@ -38,8 +38,6 @@ public class IndexInfoController implements IndexInfoApi {
     private final IndexInfoService indexInfoService;
     private final IndexInfoSearchMapper indexInfoSearchMapper;
 
-
-    // 단건 조회
     @Override
     @GetMapping("/{id}")
     public ResponseEntity<Object> getIndexInfo(@PathVariable("id") Long id) {
@@ -57,7 +55,6 @@ public class IndexInfoController implements IndexInfoApi {
         }
     }
 
-    // 목록 조회
     @Override
     @GetMapping
     public ResponseEntity<Object> getIndexInfoList(
@@ -93,7 +90,6 @@ public class IndexInfoController implements IndexInfoApi {
         }
     }
 
-    // 요약 리스트
     @GetMapping("/summaries")
     public ResponseEntity<Object> getIndexInfoSummaries() {
         try {
@@ -106,7 +102,6 @@ public class IndexInfoController implements IndexInfoApi {
         }
     }
 
-    // 생성
     @PostMapping
     public ResponseEntity<IndexInfoDto> createIndexInfo(@Valid @RequestBody IndexInfoCreateRequest request) {
         IndexInfoCreateCommand command = IndexInfoCreateCommand.fromUser(request);
@@ -114,7 +109,6 @@ public class IndexInfoController implements IndexInfoApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(indexInfoDto);
     }
 
-    // 수정
     @PatchMapping("/{id}")
     public ResponseEntity<IndexInfoDto> updateIndexInfo(@PathVariable Long id,
         @Valid @RequestBody IndexInfoUpdateRequest request) {
@@ -122,7 +116,6 @@ public class IndexInfoController implements IndexInfoApi {
         return ResponseEntity.status(HttpStatus.OK).body(updatedIndex);
     }
 
-    // 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIndexInfo(@PathVariable Long id) {
         indexInfoService.deleteIndexInfo(id);

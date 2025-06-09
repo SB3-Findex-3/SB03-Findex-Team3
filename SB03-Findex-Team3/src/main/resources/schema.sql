@@ -10,13 +10,12 @@ CREATE TABLE index_info
     index_name           VARCHAR(240)     NOT NULL,
     employed_items_count INT              NOT NULL,
     base_point_in_time   DATE             NOT NULL,
-    base_index           DECIMAL(10,2)              NOT NULL,
+    base_index           DECIMAL(10,2)    NOT NULL,
     source_type          VARCHAR(10)      NOT NULL,
     favorite             BOOLEAN          NOT NULL,
     UNIQUE (index_classification, index_name),
     CONSTRAINT chk_source_type CHECK (source_type IN ('USER', 'OPEN_API'))
 );
-
 
 CREATE TABLE sync_job
 (

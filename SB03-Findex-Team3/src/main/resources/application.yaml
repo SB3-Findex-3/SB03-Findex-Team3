@@ -25,3 +25,22 @@ api:
     base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
 server:
   port: 8080
+
+api:
+  data:
+    service-key: G7FLC5vHWViaX082VqiLUzUzJG7XNg0TXUftb6tumyoJoORHBSVV9DqNrmpMnKfVVjjqztgA3NW%2BkX8Lb8PiCg%3D%3D
+    base-url: https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService
+
+
+logging:
+  level:
+    root:
+    org.springframework.web: info
+    com.sprint.findex: debug
+
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

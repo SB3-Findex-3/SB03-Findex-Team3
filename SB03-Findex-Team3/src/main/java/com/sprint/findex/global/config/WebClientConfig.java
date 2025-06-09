@@ -25,7 +25,6 @@ public class WebClientConfig {
             });
 
         return WebClient.builder()
-            .baseUrl("https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService")
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .build();
     }

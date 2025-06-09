@@ -7,6 +7,8 @@ import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.repository.IndexInfoRepository;
 import jakarta.annotation.PostConstruct;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -57,7 +59,7 @@ public class IndexInfoSyncService {
     public Mono<ApiResponse> fetchAndSaveIndexInfoAsync() {
         log.info("지수 정보 비동기 동기화 시작");
 
-        String url = buildApiUrl(1, 10);
+        String url = buildApiUrl(4, 200);
 
         return callApi(url)
             .doOnNext(response -> {
@@ -143,7 +145,7 @@ public class IndexInfoSyncService {
             item.getIndexName(),
             parseInteger(item.getEmployedItemsCount()),
             parseDate(item.getBasePointTime()),
-            parseInteger(item.getBaseIndex()),
+            parseBigDecimal(item.getBaseIndex()),
             SourceType.OPEN_API,
             false);
     }
@@ -162,8 +164,11 @@ public class IndexInfoSyncService {
         }
 
         // 기준지수 업데이트
-        Integer newBaseIndex = parseInteger(item.getBaseIndex());
-        if (!newBaseIndex.equals(indexInfo.getBaseIndex())) {
+        BigDecimal newBaseIndex = parseBigDecimal(item.getBaseIndex());
+        if (newBaseIndex != null) {
+            newBaseIndex = newBaseIndex.setScale(2, RoundingMode.HALF_UP); // 자리수 맞추기(옵션)
+        }
+        if (newBaseIndex != null && !newBaseIndex.equals(indexInfo.getBaseIndex())) {
             indexInfo.updateBaseIndex(newBaseIndex);
             isUpdated = true;
         }
@@ -289,6 +294,19 @@ public class IndexInfoSyncService {
         }
     }
 
+    // 문자열을 BigDecimal로 파싱
+    private BigDecimal parseBigDecimal(String value) {
+        if (value == null || value.trim().isEmpty() || "-".equals(value.trim())) {
+            return null;
+        }
+        try {
+            // 콤마, 공백 제거 후 변환
+            return new BigDecimal(value.replaceAll(",", "").trim());
+        } catch (NumberFormatException e) {
+            log.warn("BigDecimal 파싱 실패: {}, null 반환", value);
+            return null;
+        }
+    }
 
     // 문자열을 Integer로 파싱
     private Integer parseInteger(String value) {

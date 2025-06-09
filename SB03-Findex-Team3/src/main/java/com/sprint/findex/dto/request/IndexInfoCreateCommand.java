@@ -1,6 +1,7 @@
 package com.sprint.findex.dto.request;
 
 import com.sprint.findex.entity.SourceType;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Builder;
 
@@ -10,7 +11,7 @@ public record IndexInfoCreateCommand(
     String indexName,
     Integer employedItemsCount,
     LocalDate basePointInTime,
-    Integer baseIndex,
+    BigDecimal baseIndex,
     boolean favorite,
     SourceType sourceType
 ) {
@@ -20,7 +21,7 @@ public record IndexInfoCreateCommand(
             .indexName(request.indexName())
             .employedItemsCount(request.employedItemsCount() != null ? request.employedItemsCount() : 0)
             .basePointInTime(request.basePointInTime())
-            .baseIndex(request.baseIndex() != null ? request.baseIndex() : 100)
+            .baseIndex(request.baseIndex() != null ? request.baseIndex() : BigDecimal.valueOf(1000.00))
             .favorite(request.favorite())
             .sourceType(SourceType.USER)
             .build();

@@ -8,6 +8,7 @@ import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
 import com.sprint.findex.service.SyncJobService;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -165,7 +166,7 @@ public class BasicSyncJobService implements SyncJobService {
     private Mono<SyncJobDto> handleError(Throwable e, IndexDataSyncRequest request, Long indexInfoId, String workerIp) {
         log.error("❌ Sync failed: indexInfoId={}, range={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
 
-        IndexInfo indexInfo = new IndexInfo("indexName", "description", 0, LocalDate.now(), 0, SourceType.OPEN_API, true);
+        IndexInfo indexInfo = new IndexInfo("indexName", "description", 0, LocalDate.now(), BigDecimal.valueOf(0), SourceType.OPEN_API, true);
 
         SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, request.baseDateFrom(), workerIp, OffsetDateTime.now(), SyncJobResult.FAILED);
         syncJobRepository.save(job);

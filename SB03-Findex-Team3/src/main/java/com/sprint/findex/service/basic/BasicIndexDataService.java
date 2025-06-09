@@ -25,8 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -49,7 +47,7 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("참조하는 지수 정보를 찾을 수 없음"));
 
         IndexData indexData = IndexData.from(indexInfo, request, SourceType.USER);
-        return indexDataMapper.toDto(indexDataRepository.save(indexData));
+        return IndexDataMapper.toDto(indexDataRepository.save(indexData));
     }
 
     @Override
@@ -59,7 +57,7 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("수정할 지수 데이터를 찾을 수 없음"));
 
         indexData.update(request);
-        return indexDataMapper.toDto(indexDataRepository.save(indexData));
+        return IndexDataMapper.toDto(indexDataRepository.save(indexData));
     }
 
     @Override

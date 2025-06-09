@@ -33,21 +33,13 @@ public class BasicIndexInfoService implements IndexInfoService {
 
 
     @Override
-    @Transactional
     public IndexInfoDto createIndexInfo(IndexInfoCreateCommand command) {
-        IndexInfo indexInfo = IndexInfo.create(command);
-        indexInfoRepository.save(indexInfo);
-
-        return indexInfoMapper.toDto(indexInfo);
+        return null;
     }
 
     @Override
-    @Transactional
     public IndexInfo createIndexInfoFromApi(IndexInfoCreateCommand command) {
-        IndexInfo indexInfo = IndexInfo.create(command);
-        indexInfoRepository.save(indexInfo);
-
-        return indexInfo;
+        return null;
     }
 
     @Override

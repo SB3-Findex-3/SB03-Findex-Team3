@@ -11,7 +11,6 @@ import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import com.sprint.findex.mapper.IndexInfoSearchMapper;
 import com.sprint.findex.service.IndexInfoService;
-import com.sprint.findex.service.OpenApiService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -30,7 +29,6 @@ public class IndexInfoController implements IndexInfoApi {
 
     private final IndexInfoService indexInfoService;
     private final IndexInfoSearchMapper indexInfoSearchMapper;
-    private final OpenApiService openApiService;
 
     // 단건 조회
     @Override

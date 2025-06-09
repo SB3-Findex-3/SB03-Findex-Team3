@@ -13,9 +13,10 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long>,
 
     List<IndexInfo> findAllByOrderByIdAsc();
 
+    // Open API 연동을 위해 추가한 메서드 3개
     Optional<IndexInfo> findByIndexClassificationAndIndexName(String indexClassification, String indexName);
 
-     Optional<IndexInfo> findByIndexName(String indexName);
+    Optional<IndexInfo> findByIndexName(String indexName);
 
-     List<IndexInfo> findByFavoriteTrue();
+    List<IndexInfo> findByFavoriteTrue();
 }

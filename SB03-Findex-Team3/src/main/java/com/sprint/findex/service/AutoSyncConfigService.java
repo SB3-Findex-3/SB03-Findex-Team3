@@ -1,8 +1,15 @@
 package com.sprint.findex.service;
 
+import com.sprint.findex.dto.request.AutoSyncConfigQueryParams;
+import com.sprint.findex.dto.request.AutoSyncConfigUpdateRequest;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
+import com.sprint.findex.dto.response.CursorPageResponseAutoSyncConfigDto;
 
 public interface AutoSyncConfigService {
 
-    AutoSyncConfigDto updateOrCreateConfig(Long id, boolean enabled);
+    AutoSyncConfigDto updateOrCreate(Long id, AutoSyncConfigUpdateRequest request);
+
+    CursorPageResponseAutoSyncConfigDto findByCursor(AutoSyncConfigQueryParams params);
+
+//    List<AutoSyncConfigDto> findAllByParams(AutoSyncConfigSearchParams params);
 }

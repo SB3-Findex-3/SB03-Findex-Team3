@@ -1,9 +1,11 @@
 package com.sprint.findex.service;
 
 
+import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.global.dto.ApiResponse;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class IndexInfoSyncService {
 
     private final IndexInfoRepository indexInfoRepository;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
 
     //HTTP 요청 처리
     private final WebClient webClient;
@@ -121,17 +124,24 @@ public class IndexInfoSyncService {
     }
 
 
-    //객체 저장 로직
+    // 객체 저장 로직, info 저장 시 autosync도 저장
     private IndexInfo createNew(ApiResponse.StockIndexItem item) {
-        return new IndexInfo(
-            item.getIndexClassification(),
-            item.getIndexName(),
-            parseInteger(item.getEmployedItemsCount()),
-            parseDate(item.getBasePointTime()),
-            parseBigDecimal(item.getBaseIndex()),
-            SourceType.OPEN_API,
-            false
+        IndexInfo newIndexInfo = new IndexInfo(
+                item.getIndexClassification(),
+                item.getIndexName(),
+                parseInteger(item.getEmployedItemsCount()),
+                parseDate(item.getBasePointTime()),
+                parseBigDecimal(item.getBaseIndex()),
+                SourceType.OPEN_API,
+                false
         );
+
+        indexInfoRepository.save(newIndexInfo);
+
+        AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(newIndexInfo);
+        autoSyncConfigRepository.save(config);
+
+        return newIndexInfo;
     }
 
 

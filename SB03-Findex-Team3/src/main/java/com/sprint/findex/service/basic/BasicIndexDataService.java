@@ -16,18 +16,20 @@ import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexDataSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -49,7 +51,7 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("참조하는 지수 정보를 찾을 수 없음"));
 
         IndexData indexData = IndexData.from(indexInfo, request, SourceType.USER);
-        return indexDataMapper.toDto(indexDataRepository.save(indexData));
+        return IndexDataMapper.toDto(indexDataRepository.save(indexData));
     }
 
     @Override
@@ -59,7 +61,7 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("수정할 지수 데이터를 찾을 수 없음"));
 
         indexData.update(request);
-        return indexDataMapper.toDto(indexDataRepository.save(indexData));
+        return IndexDataMapper.toDto(indexDataRepository.save(indexData));
     }
 
     @Override
@@ -173,7 +175,7 @@ public class BasicIndexDataService implements IndexDataService {
                     .encodeToString(jsonCursor.getBytes(StandardCharsets.UTF_8));
             }
         } catch (JsonProcessingException e) {
-            log.error("❌ Cursor 인코딩 실패", e);
+            log.error("Cursor 인코딩 실패", e);
         }
         return null;
     }

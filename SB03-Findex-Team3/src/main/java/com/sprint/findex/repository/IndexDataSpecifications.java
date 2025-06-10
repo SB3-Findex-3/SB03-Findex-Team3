@@ -7,18 +7,14 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Optional;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class IndexDataSpecifications {
 
@@ -72,7 +68,7 @@ public class IndexDataSpecifications {
 
                     predicates.add(compound);
                 } catch (Exception e) {
-                    log.error("❌ 커서 디코딩 또는 조건 생성 실패", e);
+                    log.error("커서 디코딩 또는 조건 생성 실패", e);
                 }
             }
 
@@ -121,13 +117,13 @@ public class IndexDataSpecifications {
                 }
 
                 default -> {
-                    log.warn("⚠️ 지원하지 않는 정렬 필드: {}", sortField);
+                    log.warn("지원하지 않는 정렬 필드: {}", sortField);
                     yield null;
                 }
             };
         } catch (Exception e) {
             // 커서 파싱 오류 로그 출력
-            log.error("❌ 커서 파싱 실패: {}", e.getMessage());
+            log.error("커서 파싱 실패: {}", e.getMessage());
             return null;
         }
     }

@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
-@Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,9 +28,11 @@ public class AutoSyncConfig extends BaseEntity {
 
     public AutoSyncConfig(IndexInfo indexInfo) {
         this.indexInfo = indexInfo;
-        this.indexClassification = indexInfo.getIndexClassification();
-        this.indexName = indexInfo.getIndexName();
         this.enabled = false; // 항상 비활성화 상태
+    }
+
+    public void update(boolean isActive) {
+        this.enabled = isActive;
     }
 
     public static AutoSyncConfig ofIndexInfo(IndexInfo indexInfo) {

@@ -1,23 +1,22 @@
 package com.sprint.findex.entity;
 
+import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.entity.base.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "index_info",
     uniqueConstraints = @UniqueConstraint(columnNames = {"index_classification", "index_name"}))
 @Getter
 @Entity
+@Builder
 public class IndexInfo extends BaseEntity {
 
     @Column(name = "index_classification", length = 240, unique = true, nullable = false)
@@ -93,4 +92,17 @@ public class IndexInfo extends BaseEntity {
             ", favorite=" + favorite +
             "} " + super.toString();
     }
+
+    public static IndexInfo create(IndexInfoCreateCommand command) {
+        return IndexInfo.builder()
+                .indexClassification(command.indexClassification())
+                .indexName(command.indexName())
+                .employedItemsCount(command.employedItemsCount())
+                .basePointInTime(command.basePointInTime())
+                .baseIndex(command.baseIndex())
+                .favorite(command.favorite())
+                .sourceType(command.sourceType())
+                .build();
+    }
+
 }

@@ -6,12 +6,6 @@ import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.repository.IndexInfoRepository;
 import jakarta.annotation.PostConstruct;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 @Slf4j
@@ -54,7 +55,7 @@ public class IndexInfoSyncService {
     public Mono<ApiResponse> fetchAndSaveIndexInfoAsync() {
         log.info("지수 정보 비동기 동기화 시작");
 
-        String url = buildApiUrl(1, 10);
+        String url = buildApiUrl(1, 156);
 
         return callApiBasic(url)
             .doOnNext(response -> {

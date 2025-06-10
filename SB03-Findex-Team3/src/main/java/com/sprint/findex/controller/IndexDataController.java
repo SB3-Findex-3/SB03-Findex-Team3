@@ -1,14 +1,15 @@
 package com.sprint.findex.controller;
 
+import com.sprint.findex.dto.dashboard.IndexChartDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
+import com.sprint.findex.entity.Period;
 import com.sprint.findex.service.IndexDataService;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -113,6 +114,15 @@ public class IndexDataController {
 
         name.append(".csv");
         return name.toString();
+    }
+
+    @GetMapping("/{id}/chart")
+    public ResponseEntity<IndexChartDto> getChartData(
+        @PathVariable("id") Long indexInfoId,
+        @RequestParam(value = "period", defaultValue = "DAILY") Period period) {
+
+        IndexChartDto chartData = indexDataService.getIndexChart(indexInfoId, period);
+        return ResponseEntity.ok(chartData);
     }
 
 }

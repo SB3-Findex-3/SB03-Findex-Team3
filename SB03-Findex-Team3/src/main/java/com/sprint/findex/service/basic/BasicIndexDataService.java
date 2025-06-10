@@ -2,6 +2,8 @@ package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.findex.dto.dashboard.ChartPoint;
+import com.sprint.findex.dto.dashboard.IndexChartDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
@@ -10,24 +12,37 @@ import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
+import com.sprint.findex.entity.Period;
 import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexDataSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -41,6 +56,10 @@ public class BasicIndexDataService implements IndexDataService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
     private final IndexDataMapper indexDataMapper;
+
+    static final int MA5DATA_NUM = 5;
+    static final int MA20DATA_NUM = 20;
+
 
     @Override
     @Transactional
@@ -190,6 +209,78 @@ public class BasicIndexDataService implements IndexDataService {
         Sort.Direction direction =
             "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         return Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
+    }
+
+    @Transactional
+    @Override
+    public IndexChartDto getIndexChart(Long indexInfoId, Period period) {
+        IndexInfo indexInfo = indexInfoRepository.findById(indexInfoId)
+            .orElseThrow(() -> new NoSuchElementException());
+
+        LocalDate startDate = calculateBaseDate(period);
+        LocalDate currentDate = Instant.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+
+        List<ChartPoint> pricePoints = new ArrayList<>();
+
+        while(!startDate.isAfter(currentDate)) {
+            Optional<IndexData> dataOpt = indexDataRepository
+                .findByIndexInfoIdAndBaseDateOnlyDateMatch(indexInfoId, startDate);
+
+            LocalDate finalStartDate = startDate;
+            dataOpt.ifPresent(data ->
+                pricePoints.add(new ChartPoint(finalStartDate.toString(), data.getClosingPrice()))
+            );
+
+            startDate = startDate.plusDays(1);
+        }
+
+        List<ChartPoint> ma5 = calculateMovingAverageStrict(pricePoints, MA5DATA_NUM);
+        List<ChartPoint> ma20 = calculateMovingAverageStrict(pricePoints, MA20DATA_NUM);
+
+        return new IndexChartDto(indexInfoId, indexInfo.getIndexClassification(),
+            indexInfo.getIndexName(),period, pricePoints, ma5, ma20);
+    }
+
+    private List<ChartPoint> calculateMovingAverageStrict(List<ChartPoint> prices, int window) {
+
+        // 날짜 오름차순 정렬
+        List<ChartPoint> pts = prices.stream()
+            .sorted(Comparator.comparing(p -> LocalDate.parse(p.date())))
+            .toList();
+
+        Deque<BigDecimal> win = new ArrayDeque<>(window);
+        BigDecimal sum = BigDecimal.ZERO;
+        List<ChartPoint> result = new ArrayList<>(pts.size());
+
+        for (ChartPoint p : pts) {
+            BigDecimal v = p.value();
+            win.addLast(v);
+            sum = sum.add(v);
+
+            if (win.size() > window)             // 윈도 초과 시 맨 앞 제거
+            {
+                sum = sum.subtract(win.removeFirst());
+            }
+
+            BigDecimal avg = (win.size() == window)
+                ? sum.divide(BigDecimal.valueOf(window), 2, RoundingMode.HALF_UP)
+                : null;                      // 아직 데이터 부족
+
+            result.add(new ChartPoint(p.date(), avg));
+        }
+        return result;
+    }
+
+    private LocalDate calculateBaseDate(Period periodType) {
+        LocalDate today = Instant.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+
+        return switch (periodType) {
+            case DAILY -> today.minusDays(1);
+            case WEEKLY -> today.minusWeeks(1);
+            case MONTHLY -> today.minusMonths(1);
+            case QUARTERLY -> today.minusMonths(3);
+            case YEARLY -> today.minusYears(1);
+        };
     }
 }
 

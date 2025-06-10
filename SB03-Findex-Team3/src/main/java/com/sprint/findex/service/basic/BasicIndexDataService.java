@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.findex.dto.dashboard.ChartPoint;
 import com.sprint.findex.dto.dashboard.IndexChartDto;
+import com.sprint.findex.dto.dashboard.IndexPerformanceDto;
+import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
@@ -32,6 +34,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -211,7 +214,137 @@ public class BasicIndexDataService implements IndexDataService {
         return Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
+    @Override
+    public List<IndexPerformanceDto> getFavoriteIndexPerformances(Period period) {
+        List<IndexInfo> favorites = indexInfoRepository.findAllByFavoriteTrue();
+        LocalDate today = LocalDate.now();
+
+        return favorites.stream()
+            .map(indexInfo -> {
+                log.info("[BasicIndexDataService] 주요 지수 현황 요약, favorite: {}", indexInfo.getIndexName());
+                IndexData current = indexDataRepository.findTopByIndexInfoIdOrderByBaseDateDesc(
+                    indexInfo.getId()).orElse(null);
+
+                IndexData past = indexDataRepository.findByIndexInfoIdAndBaseDateOnlyDateMatch(
+                    indexInfo.getId(),calculateBaseDate(period))
+                    .orElse(null);
+                return IndexPerformanceDto.of(indexInfo, current, past);
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<RankedIndexPerformanceDto> getIndexPerformanceRank(Long indexInfoId, Period period, int limit) {
+//        LocalDate baseDate = calculateBaseDate(period);
+//
+//        List<IndexInfo> targetInfos = (indexInfoId != null)
+//            ? indexInfoRepository.findAllById(List.of(indexInfoId))
+//            : indexInfoRepository.findAll();
+//
+//        List<IndexPerformanceDto> sortedList = targetInfos.stream()
+//            .map(info -> {
+//                IndexData current = indexDataRepository.findTopByIndexInfoIdOrderByBaseDateDesc(
+//                    info.getId()).orElse(null);
+//
+//                IndexData before = indexDataRepository.findByIndexInfoIdAndBaseDateOnlyDateMatch(
+//                    info.getId(), baseDate)
+//                    .orElse(null);
+//
+//                return IndexPerformanceDto.of(info, current, before);
+//            })
+//            .filter(dto -> dto != null && dto.fluctuationRate() != null)
+//            .sorted(Comparator.comparing(IndexPerformanceDto::fluctuationRate).reversed())
+//            .limit(limit)
+//            .toList();
+//
+//        List<RankedIndexPerformanceDto> rankedList = new ArrayList<>();
+//        for (int i = 0; i < sortedList.size(); i++) {
+//            rankedList.add(new RankedIndexPerformanceDto(sortedList.get(i), i + 1));
+//        }
+//
+//        return rankedList;
+
+        log.info("getIndexPerformanceRank 메서드 시작 - indexInfoId: {}, period: {}, limit: {}", indexInfoId, period, limit);
+
+        try {
+            // 1. 기준 날짜 계산 (기간에 따른 과거 날짜)
+            LocalDate baseDate = calculateBaseDate(period);
+
+            // 2. 기준 인덱스 정보 찾기
+            IndexInfo baseIndexInfo = indexInfoRepository.findById(indexInfoId)
+                .orElseThrow(() -> new NoSuchElementException("지수 정보를 찾을 수 없습니다: " + indexInfoId));
+
+            // 3. 기준 인덱스의 현재 데이터와 과거 데이터 찾기
+            IndexData baseCurrentData = indexDataRepository.findTopByIndexInfoIdOrderByBaseDateDesc(indexInfoId)
+                .orElseThrow(() -> new NoSuchElementException("현재 지수 데이터를 찾을 수 없습니다: " + indexInfoId));
+
+            IndexData basePastData = indexDataRepository.findByIndexInfoIdAndBaseDateOnlyDateMatch(
+                    indexInfoId, baseDate)
+                .orElseThrow(() -> new NoSuchElementException("과거 지수 데이터를 찾을 수 없습니다: " + indexInfoId));
+
+            // 4. 모든 지수 정보 불러오기
+            List<IndexInfo> allIndexInfos = indexInfoRepository.findAll();
+
+            // 5. 같은 분류의 다른 지수들 필터링
+            List<IndexInfo> sameClassIndexes = allIndexInfos.stream()
+                .filter(indexInfo -> indexInfo.getIndexClassification().equals(baseIndexInfo.getIndexClassification()))
+                .collect(Collectors.toList());
+
+            log.debug("같은 분류의 지수 개수: {}", sameClassIndexes.size());
+
+            // 6. 다른 지수들의 성과 계산 및 순위 매기기 (IndexPerformanceDto.of() 메서드 사용)
+            List<IndexPerformanceDto> performances = new ArrayList<>();
+
+            for (IndexInfo indexInfo : sameClassIndexes) {
+                try {
+                    IndexData current = indexDataRepository.findTopByIndexInfoIdOrderByBaseDateDesc(
+                        indexInfo.getId()).orElse(null);
+
+                    IndexData past = indexDataRepository.findByIndexInfoIdAndBaseDateOnlyDateMatch(
+                        indexInfo.getId(), baseDate).orElse(null);
+
+                    // of 메서드 사용 전 null 체크
+                    if (current != null && past != null && past.getClosingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                        IndexPerformanceDto dto = IndexPerformanceDto.of(indexInfo, current, past);
+                        if (dto != null) {
+                            log.debug("지수 성과 계산 - 지수명: {}, 현재가: {}, 과거가: {}, versus: {}, fluctuationRate: {}",
+                                indexInfo.getIndexName(),
+                                current.getClosingPrice(),
+                                past.getClosingPrice(),
+                                dto.versus(),
+                                dto.fluctuationRate());
+
+                            performances.add(dto);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("지수 성과 계산 중 오류 발생 - 지수명: {}, 오류: {}", indexInfo.getIndexName(), e.getMessage());
+                }
+            }
+
+            // 7. 변동률 기준 내림차순 정렬
+            performances.sort(Comparator.comparing(IndexPerformanceDto::fluctuationRate).reversed());
+
+            // 8. 순위 정보 추가하여 결과 생성
+            List<RankedIndexPerformanceDto> result = new ArrayList<>();
+            for (int i = 0; i < Math.min(limit, performances.size()); i++) {
+                result.add(new RankedIndexPerformanceDto(performances.get(i), i + 1));
+            }
+
+            log.info("getIndexPerformanceRank 메서드 종료 - 결과 크기: {}", result.size());
+            return result;
+        } catch (Exception e) {
+            log.error("getIndexPerformanceRank 메서드 실행 중 오류 발생: {}", e.getMessage(), e);
+            throw e;
+        }
+
+
+    }
+
+    @Transactional(readOnly = true)
     @Override
     public IndexChartDto getIndexChart(Long indexInfoId, Period period) {
         IndexInfo indexInfo = indexInfoRepository.findById(indexInfoId)

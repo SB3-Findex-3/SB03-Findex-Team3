@@ -18,6 +18,7 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
         LocalDate baseDateTo
     );
 
+    /* 지수 정보 ID와 날짜가 일치하는 IndexData 레코드를 조회하는 쿼리*/
     @Query("SELECT i FROM IndexData i " +
         "WHERE i.indexInfo.id = :indexInfoId " +
         "AND FUNCTION('DATE', i.baseDate) = :baseDate")
@@ -25,6 +26,8 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
         @Param("indexInfoId") Long indexInfoId,
         @Param("baseDate") LocalDate baseDate
     );
+
+    Optional<IndexData> findTopByIndexInfoIdOrderByBaseDateDesc(Long id);
 
     boolean existsByIndexInfoAndBaseDate(IndexInfo indexInfo, LocalDate baseDate);
 }

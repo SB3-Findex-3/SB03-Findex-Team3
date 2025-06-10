@@ -1,6 +1,8 @@
 package com.sprint.findex.service;
 
 import com.sprint.findex.dto.dashboard.IndexChartDto;
+import com.sprint.findex.dto.dashboard.IndexPerformanceDto;
+import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
@@ -24,6 +26,10 @@ public interface IndexDataService {
     CursorPageResponseIndexData<IndexDataDto> findByCursor(IndexDataQueryParams params);
 
     List<IndexDataDto> findAllByConditions(IndexDataQueryParams params);
+
+    List<IndexPerformanceDto> getFavoriteIndexPerformances(Period period);
+
+    List<RankedIndexPerformanceDto> getIndexPerformanceRank(Long indexInfoId, Period period, int limit);
 
     IndexChartDto getIndexChart(Long indexInfoId, Period period);
 

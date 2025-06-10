@@ -1,6 +1,8 @@
 package com.sprint.findex.controller;
 
 import com.sprint.findex.dto.dashboard.IndexChartDto;
+import com.sprint.findex.dto.dashboard.IndexPerformanceDto;
+import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
@@ -125,4 +127,21 @@ public class IndexDataController {
         return ResponseEntity.ok(chartData);
     }
 
+    @GetMapping("/performance/favorite")
+    public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexPerformances(
+        @RequestParam(defaultValue = "DAILY") Period period
+        ) {
+        List<IndexPerformanceDto> result = indexDataService.getFavoriteIndexPerformances(period);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/performance/rank")
+    public ResponseEntity<List<RankedIndexPerformanceDto>> getIndexPerformanceRank(
+        @RequestParam(value = "indexInfoId") Long indexInfoId,
+        @RequestParam(defaultValue = "DAILY") Period period,
+        @RequestParam(defaultValue = "10") int limit
+        ) {
+        List<RankedIndexPerformanceDto> result = indexDataService.getIndexPerformanceRank(indexInfoId, period, limit);
+        return ResponseEntity.ok(result);
+        }
 }

@@ -2,20 +2,18 @@ package com.sprint.findex.service.basic;
 
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.response.SyncJobDto;
-import com.sprint.findex.entity.*;
+import com.sprint.findex.entity.IndexData;
+import com.sprint.findex.entity.IndexInfo;
+import com.sprint.findex.entity.SourceType;
+import com.sprint.findex.entity.SyncJob;
+import com.sprint.findex.entity.SyncJobResult;
+import com.sprint.findex.entity.SyncJobType;
 import com.sprint.findex.global.dto.MarketIndexResponse;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
 import com.sprint.findex.service.SyncJobService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
-
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +22,13 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -164,7 +169,7 @@ public class BasicSyncJobService implements SyncJobService {
     private Mono<SyncJobDto> handleError(Throwable e, IndexDataSyncRequest request, Long indexInfoId, String workerIp) {
         log.error("❌ Sync failed: indexInfoId={}, range={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
 
-        IndexInfo indexInfo = new IndexInfo("indexName", "description", 0, LocalDate.now(), 0, SourceType.OPEN_API, true);
+        IndexInfo indexInfo = new IndexInfo("indexName", "description", 0, LocalDate.now(), BigDecimal.valueOf(0), SourceType.OPEN_API, true);
 
         return Mono.just(createSyncJobDto(indexInfo, request.baseDateFrom(), workerIp, SyncJobResult.FAILED));
     }

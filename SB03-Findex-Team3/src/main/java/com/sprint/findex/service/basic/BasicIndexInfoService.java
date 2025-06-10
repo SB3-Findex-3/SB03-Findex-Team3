@@ -60,9 +60,10 @@ public class BasicIndexInfoService implements IndexInfoService {
             indexInfo.updateBaseIndex(updateDto.baseIndex());
         }
 
-        if(!updateDto.favorite() == indexInfo.isFavorite()){
+        if(updateDto.favorite() != null && updateDto.favorite() != indexInfo.isFavorite()){
             indexInfo.updateFavorite(updateDto.favorite());
         }
+
 
         return indexInfoMapper.toDto(indexInfo);
     }

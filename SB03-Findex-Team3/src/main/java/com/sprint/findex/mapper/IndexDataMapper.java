@@ -2,7 +2,9 @@ package com.sprint.findex.mapper;
 
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.IndexData;
+import org.springframework.stereotype.Component;
 
+@Component
 public class IndexDataMapper {
 
     public static IndexDataDto toDto(IndexData entity) {

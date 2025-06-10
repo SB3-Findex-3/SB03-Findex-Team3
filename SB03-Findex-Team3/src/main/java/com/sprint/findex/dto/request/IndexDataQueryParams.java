@@ -13,5 +13,17 @@ public record IndexDataQueryParams(
     Integer size
 ) {
 
+    public IndexDataQueryParams withoutCursor() {
+        return new IndexDataQueryParams(
+            this.indexInfoId(),
+            this.startDate(),
+            this.endDate(),
+            null,
+            null,
+            this.sortField(),
+            this.sortDirection(),
+            this.size()
+        );
+    }
 
 }

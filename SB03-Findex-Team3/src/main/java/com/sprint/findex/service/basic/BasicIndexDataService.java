@@ -6,7 +6,6 @@ import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
-import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
@@ -25,8 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -36,7 +33,7 @@ public class BasicIndexDataService implements IndexDataService {
 
     private static final String DEFAULT_SORT_FIELD = "baseDate";
     private static final String DEFAULT_SORT_DIRECTION = "desc";
-    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int DEFAULT_PAGE_SIZE = 200;
 
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
@@ -72,54 +69,60 @@ public class BasicIndexDataService implements IndexDataService {
     }
 
 
-    @Transactional
+
     @Override
-    public String exportToCsv(IndexDataQueryParams params) {
-
-        String sortField = params.sortField() != null ? params.sortField() : "baseDate";
-        Sort.Direction direction = "asc".equalsIgnoreCase(params.sortDirection()) ? Sort.Direction.ASC : Sort.Direction.DESC;
-
-        Sort sort = Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
-
+    @Transactional(readOnly = true)
+    public List<IndexDataDto> findAllByConditions(IndexDataQueryParams params) {
+        Sort sort = resolveSort(params);
         var spec = IndexDataSpecifications.withFilters(params);
 
-
-        List<IndexData> rawResults = indexDataRepository.findAll(spec, sort);
-
-
-        List<IndexDataDto> content = rawResults.stream()
-            .map(indexDataMapper::toDto)
+        List<IndexData> results = indexDataRepository.findAll(spec, sort);
+        return results.stream()
+            .map(IndexDataMapper::toDto)
             .collect(Collectors.toList());
-
-        return IndexDataCsvExporter.toCsv(content);
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public CursorPageResponseIndexData<IndexDataDto> findByCursor(IndexDataQueryParams params) {
-        Pageable pageable = resolvePageable(params); // 페이징과 정렬 한 번에 처리
-        var spec = IndexDataSpecifications.withFilters(params);
+        int pageSize = (params.size() != null && params.size() > 0) ? params.size() : DEFAULT_PAGE_SIZE;
 
-        Page<IndexData> pageResult = indexDataRepository.findAll(spec, pageable);
+        Pageable pageable = resolvePageable(params);
+        var fullSpec = IndexDataSpecifications.withFilters(params);
+        var countSpec = IndexDataSpecifications.withFilters(params.withoutCursor());
+
+        Page<IndexData> pageResult = indexDataRepository.findAll(fullSpec, pageable);
         List<IndexData> rawResults = pageResult.getContent();
-        boolean hasNext = rawResults.size() > params.size();
 
+        boolean hasNext = rawResults.size() > pageSize;
         if (hasNext) {
-            rawResults = rawResults.subList(0, params.size());
+            rawResults = rawResults.subList(0, pageSize);
         }
 
         List<IndexDataDto> content = rawResults.stream()
-            .map(indexDataMapper::toDto)
+            .map(IndexDataMapper::toDto)
             .collect(Collectors.toList());
 
         String nextCursor = buildCursor(rawResults, params.sortField());
         String nextIdAfter = buildIdCursor(rawResults);
 
-        return new CursorPageResponseIndexData<>(content, nextCursor, nextIdAfter, params.size(), pageResult.getTotalElements(), hasNext);
+        // 정확한 총 개수 계산
+        long totalCount = indexDataRepository.count(countSpec);
+
+        return new CursorPageResponseIndexData<>(
+            content,
+            nextCursor,
+            nextIdAfter,
+            pageSize,
+            totalCount,
+            hasNext
+        );
     }
 
+
     private String buildCursor(List<IndexData> rawResults, String sortField) {
-        if (rawResults.isEmpty()) return null;
+        if (rawResults.isEmpty())
+            return null;
 
         IndexData last = rawResults.get(rawResults.size() - 1);
         Object cursorValue = switch (sortField) {
@@ -140,7 +143,8 @@ public class BasicIndexDataService implements IndexDataService {
     }
 
     private String buildIdCursor(List<IndexData> rawResults) {
-        if (rawResults.isEmpty()) return null;
+        if (rawResults.isEmpty())
+            return null;
 
         IndexData last = rawResults.get(rawResults.size() - 1);
         return encodeCursor(last.getId());
@@ -151,7 +155,8 @@ public class BasicIndexDataService implements IndexDataService {
             if (value != null) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 String jsonCursor = objectMapper.writeValueAsString(Map.of("value", value));
-                return Base64.getEncoder().encodeToString(jsonCursor.getBytes(StandardCharsets.UTF_8));
+                return Base64.getEncoder()
+                    .encodeToString(jsonCursor.getBytes(StandardCharsets.UTF_8));
             }
         } catch (JsonProcessingException e) {
             log.error("❌ Cursor 인코딩 실패", e);
@@ -166,9 +171,11 @@ public class BasicIndexDataService implements IndexDataService {
 
     private Sort resolveSort(IndexDataQueryParams params) {
         String sortField = params.sortField() != null ? params.sortField() : DEFAULT_SORT_FIELD;
-        String sortDir = params.sortDirection() != null ? params.sortDirection() : DEFAULT_SORT_DIRECTION;
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortDir =
+            params.sortDirection() != null ? params.sortDirection() : DEFAULT_SORT_DIRECTION;
+        Sort.Direction direction =
+            "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         return Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
     }
-
 }
+

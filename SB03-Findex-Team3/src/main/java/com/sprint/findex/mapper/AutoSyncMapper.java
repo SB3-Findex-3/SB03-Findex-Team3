@@ -1,0 +1,19 @@
+package com.sprint.findex.mapper;
+
+import com.sprint.findex.dto.response.AutoSyncConfigDto;
+import com.sprint.findex.entity.AutoSyncConfig;
+import org.springframework.stereotype.Component;
+
+@Component
+public class AutoSyncMapper {
+
+    public AutoSyncConfigDto toDto(AutoSyncConfig autoSyncConfig) {
+        return new AutoSyncConfigDto(
+            autoSyncConfig.getId(),
+            autoSyncConfig.getIndexInfo().getId(),
+            autoSyncConfig.getIndexInfo().getIndexClassification(),
+            autoSyncConfig.getIndexInfo().getIndexName(),
+            autoSyncConfig.isEnabled()
+        );
+    }
+}

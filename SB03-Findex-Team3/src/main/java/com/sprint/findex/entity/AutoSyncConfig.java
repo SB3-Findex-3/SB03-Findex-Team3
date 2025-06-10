@@ -1,26 +1,26 @@
 package com.sprint.findex.entity;
 
+import com.sprint.findex.entity.base.BaseEntity;
+import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.UUID;
 
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
-@RequiredArgsConstructor
-@AllArgsConstructor
-// TODO 
-// Entity
-// Table
-public class AutoSyncConfig {
+@Entity
+@Table(name = "auto_sync")
+public class AutoSyncConfig extends BaseEntity {
 
-    private UUID id; // 해당 지수 ID
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "index_info_id", nullable = false)
+    private IndexInfo indexInfo;
 
-    private boolean enabled; // 활성화
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled;
 
-    private UUID indexInfoId;
-
-    private String indexClassification;
-
-    private String indexName;
+    public AutoSyncConfig(IndexInfo indexInfo, boolean enabled) {
+        this.indexInfo = indexInfo;
+        this.enabled = enabled;
+    }
 }

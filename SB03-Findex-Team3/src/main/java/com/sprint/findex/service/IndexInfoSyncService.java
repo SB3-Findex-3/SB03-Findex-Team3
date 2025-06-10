@@ -1,9 +1,11 @@
 package com.sprint.findex.service;
 
 
+import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.global.dto.ApiResponse;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
@@ -30,7 +32,7 @@ public class IndexInfoSyncService {
 
     private final IndexInfoRepository indexInfoRepository;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
-
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
     //HTTP 요청 처리
     private final WebClient webClient;
 
@@ -120,9 +122,8 @@ public class IndexInfoSyncService {
     }
 
 
-    //객체 저장 로직
     private IndexInfo createNew(ApiResponse.StockIndexItem item) {
-        return new IndexInfo(
+        IndexInfo newIndexInfo = new IndexInfo(
             item.getIndexClassification(),
             item.getIndexName(),
             parseInteger(item.getEmployedItemsCount()),
@@ -131,10 +132,16 @@ public class IndexInfoSyncService {
             SourceType.OPEN_API,
             false
         );
+
+        indexInfoRepository.save(newIndexInfo);
+
+        AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(newIndexInfo);
+        config.setEnabled(false);
+        autoSyncConfigRepository.save(config);
+
+        return newIndexInfo;
     }
 
-
-    // 업데이트 로직
     private IndexInfo updateExisting(IndexInfo existing, ApiResponse.StockIndexItem item) {
         existing.updateEmployedItemsCount(parseInteger(item.getEmployedItemsCount()));
         existing.updateBaseIndex(parseBigDecimal(item.getBaseIndex()));

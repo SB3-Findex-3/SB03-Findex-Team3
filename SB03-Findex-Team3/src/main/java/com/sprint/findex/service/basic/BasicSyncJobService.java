@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -162,9 +163,15 @@ public class BasicSyncJobService implements SyncJobService {
     }
 
     private Mono<SyncJobDto> handleError(Throwable e, IndexDataSyncRequest request, Long indexInfoId, String workerIp) {
-        log.error("❌ Sync failed: indexInfoId={}, range={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
+        log.error("Sync failed: indexInfoId={}, range={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
 
-        IndexInfo indexInfo = new IndexInfo("indexName", "description", 0, LocalDate.now(), 0, SourceType.OPEN_API, true);
+        IndexInfo indexInfo = new IndexInfo("indexName",
+                "description",
+                0,
+                LocalDate.now(),
+                BigDecimal.valueOf(0),
+                SourceType.OPEN_API,
+                false);
 
         return Mono.just(createSyncJobDto(indexInfo, request.baseDateFrom(), workerIp, SyncJobResult.FAILED));
     }

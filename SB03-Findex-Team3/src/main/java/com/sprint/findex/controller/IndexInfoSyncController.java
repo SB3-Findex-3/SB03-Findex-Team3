@@ -10,9 +10,6 @@ import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexInfoSyncService;
 import com.sprint.findex.service.SyncJobHistoryService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @RestController

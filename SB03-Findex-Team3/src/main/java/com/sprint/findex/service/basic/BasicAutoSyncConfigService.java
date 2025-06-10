@@ -5,10 +5,13 @@ import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
 import com.sprint.findex.dto.response.CursorPageResponseAutoSyncConfigDto;
 import com.sprint.findex.entity.AutoSyncConfig;
-import com.sprint.findex.mapper.AutoSyncMapper;
-import com.sprint.findex.repository.AutoSyncRepository;
-import com.sprint.findex.specification.AutoSyncSpecifications;
-import com.sprint.findex.service.AutoSyncService;
+import com.sprint.findex.entity.IndexInfo;
+import com.sprint.findex.mapper.AutoSyncConfigMapper;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
+import com.sprint.findex.repository.IndexInfoRepository;
+import com.sprint.findex.specification.AutoSyncConfigSpecifications;
+import com.sprint.findex.service.AutoSyncConfigService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -25,22 +28,46 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class BasicAutoSyncService implements AutoSyncService {
+public class BasicAutoSyncConfigService implements AutoSyncConfigService {
 
-    private final AutoSyncRepository autoSyncRepository;
-    private final AutoSyncMapper autoSyncMapper;
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
+    private final AutoSyncConfigMapper autoSyncConfigMapper;
+    private final IndexInfoRepository indexInfoRepository;
 
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final String DEFAULT_SORT_FIELD = "indexInfo.indexName";
     private static final String DEFAULT_SORT_DIRECTION = "asc";
 
     @Override
+    public AutoSyncConfigDto updateOrCreateConfig(Long id, boolean enabled) {
+        return autoSyncConfigRepository.findById(id)
+            .map(config -> {
+                config.setEnabled(enabled); // 기존 설정 업데이트
+                AutoSyncConfig updatedConfig = autoSyncConfigRepository.save(config);
+
+                return autoSyncConfigMapper.toDto(updatedConfig);
+            })
+            .orElseGet(() -> {
+                IndexInfo indexInfo = indexInfoRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("IndexInfo with id " + id + " not found"));
+
+                AutoSyncConfig newAutoSyncConfig = AutoSyncConfig.ofIndexInfo(indexInfo);
+                newAutoSyncConfig.setEnabled(enabled);
+                autoSyncConfigRepository.save(newAutoSyncConfig);
+
+                AutoSyncConfigDto newAutoSyncConfigDto = autoSyncConfigMapper.toDto(newAutoSyncConfig);
+
+                return newAutoSyncConfigDto;
+            });
+    }
+
+    @Override
     public CursorPageResponseAutoSyncConfigDto findByCursor(AutoSyncQueryParams params) {
         int pageSize = (params.size() != null && params.size() > 0) ? params.size() : DEFAULT_PAGE_SIZE;
         Pageable pageable = resolvePageable(params, pageSize + 1);
-        var spec = AutoSyncSpecifications.withFilters(params);
+        var spec = AutoSyncConfigSpecifications.withFilters(params);
 
-        Page<AutoSyncConfig> page = autoSyncRepository.findAll(spec, pageable);
+        Page<AutoSyncConfig> page = autoSyncConfigRepository.findAll(spec, pageable);
         List<AutoSyncConfig> rawResults = page.getContent();
 
         boolean hasNext = rawResults.size() > pageSize;
@@ -49,7 +76,7 @@ public class BasicAutoSyncService implements AutoSyncService {
         }
 
         List<AutoSyncConfigDto> content = rawResults.stream()
-            .map(autoSyncMapper::toDto)
+            .map(autoSyncConfigMapper::toDto)
             .collect(Collectors.toList());
 
         String nextCursor = buildCursor(rawResults, params.sortField());

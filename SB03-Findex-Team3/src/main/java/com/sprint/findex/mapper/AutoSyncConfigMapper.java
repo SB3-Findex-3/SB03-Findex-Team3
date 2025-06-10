@@ -5,7 +5,7 @@ import com.sprint.findex.entity.AutoSyncConfig;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AutoSyncMapper {
+public class AutoSyncConfigMapper {
 
     public AutoSyncConfigDto toDto(AutoSyncConfig autoSyncConfig) {
         return new AutoSyncConfigDto(

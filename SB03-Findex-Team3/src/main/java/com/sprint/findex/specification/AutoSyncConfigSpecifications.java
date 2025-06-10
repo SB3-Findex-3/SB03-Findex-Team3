@@ -12,9 +12,9 @@ import org.springframework.data.jpa.domain.Specification;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class AutoSyncSpecifications {
+public class AutoSyncConfigSpecifications {
 
-    private static final Logger log = LoggerFactory.getLogger(AutoSyncSpecifications.class);
+    private static final Logger log = LoggerFactory.getLogger(AutoSyncConfigSpecifications.class);
 
     public static Specification<AutoSyncConfig> withFilters(AutoSyncQueryParams params) {
         return (root, query, cb) -> {

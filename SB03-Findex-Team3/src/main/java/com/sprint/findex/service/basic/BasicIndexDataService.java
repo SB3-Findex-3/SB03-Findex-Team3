@@ -246,11 +246,9 @@ public class BasicIndexDataService implements IndexDataService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<IndexPerformanceDto> getFavoriteIndexPerformances(Period periodType) {
+    public List<IndexPerformanceDto> getFavoriteIndexPerformances(Period period) {
         List<IndexInfo> favorites = indexInfoRepository.findByFavoriteTrue();
-        LocalDate today = LocalDate.now();
 
-        //최신 날짜로 부터 1달 전의 값을 구해야 한다.
         return favorites.stream()
             .map(indexInfo -> {
                 log.info("[BasicIndexDataService] method getFavoriteIndexPerformances, favorite: {} ",
@@ -260,7 +258,7 @@ public class BasicIndexDataService implements IndexDataService {
 
                 IndexData past = indexDataRepository.findByIndexInfoIdAndBaseDateOnlyDateMatch(
                         indexInfo.getId(),
-                        calculateBaseDate(periodType))
+                        calculateBaseDate(period))
                     .orElse(null);
                 return IndexPerformanceDto.of(indexInfo, current,
                     past);

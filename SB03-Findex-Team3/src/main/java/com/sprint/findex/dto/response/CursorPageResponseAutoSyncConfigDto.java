@@ -16,12 +16,12 @@ public record CursorPageResponseAutoSyncConfigDto(
         String nextIdAfter,
 
         @Schema(name = "페이지 크기")
-        int size,
+        Integer size,
 
         @Schema(name = "총 요소 수")
-        long totalElements,
+        Long totalElements,
 
         @Schema(name = "다음 페이지 여부")
-        boolean hasNext
+        Boolean hasNext
 ) {
 }

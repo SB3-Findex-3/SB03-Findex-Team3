@@ -101,20 +101,11 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             default -> "id";
         };
 
-        // 처리 방식은 이렇게 (단, indexInfo.indexName은 JPA에서 불가능하므로 fallback 필요)
-        Sort sort;
-        if ("indexName".equals(sortField)) {
-            // 여기서는 "indexInfo.indexName" 말고 DB에 실제 조인 후 정렬하는 방식이 필요
-            // 가능하면 DB View 또는 Projection 사용 고려
-            // 임시로 id 정렬로 대체
-            sort = Sort.by(direction, "indexInfo.id"); // fallback
-        } else {
-            sort = Sort.by(direction, mappedField);
-        }
+        Sort sort = "indexName".equals(sortField)
+                ? Sort.by(direction, "indexInfo.id")
+                : Sort.by(direction, mappedField);
 
-        // tie-breaker로 항상 id 오름차순 추가
-        sort = sort.and(Sort.by(Sort.Direction.ASC, "id")); // tie-breaker
-        return PageRequest.of(0, pageSize, sort);
+        return PageRequest.of(0, pageSize, sort.and(Sort.by(Sort.Direction.ASC, "id")));
     }
 
     private String buildCursor(List<AutoSyncConfig> results, String sortField) {

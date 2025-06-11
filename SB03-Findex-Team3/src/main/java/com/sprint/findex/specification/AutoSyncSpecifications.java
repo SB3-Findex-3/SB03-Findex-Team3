@@ -29,12 +29,13 @@ public class AutoSyncSpecifications {
             }
 
 
-            log.info("[withFilters] 받은 cursor 파라미터: {}", params.cursor());
-            log.info("[withFilters] 받은 idAfter 파라미터: {}", params.idAfter());
-            log.info("[withFilters] 받은 sortField: {}", params.sortField());
+            log.info("[withFilters] cursor: {}", params.cursor());
+            log.info("[withFilters] idAfter: {}", params.idAfter());
+            log.info("[withFilters] sortField: {}", params.sortField());
 
-            String sortField = (params.sortField() != null) ? params.sortField() : "indexInfo.indexName";
-            String sortDirection = (params.sortDirection() != null) ? params.sortDirection() : "ASC";
+            // 정렬 필드 및 방향 설정
+            String sortField = Optional.ofNullable(params.sortField()).orElse("indexInfo.indexName");
+            String sortDirection = Optional.ofNullable(params.sortDirection()).orElse("ASC");
 
 
             if (params.cursor() != null && params.idAfter() != null) {
@@ -54,17 +55,20 @@ public class AutoSyncSpecifications {
                     Long idAfter = Optional.ofNullable(idMap.get("id"))
                         .map(Object::toString)
                         .map(Long::valueOf)
-                        .orElseThrow(() -> new IllegalArgumentException("idAfter 디코딩 실패"));
+                        .orElseThrow(() -> new IllegalArgumentException("idAfter decoding failed"));
 
-//                    String sortField = (params.sortField() != null) ? params.sortField() : "indexInfoId";
-                    boolean isAsc = "asc".equalsIgnoreCase(params.sortDirection());
+                    boolean isAsc = "asc".equalsIgnoreCase(sortDirection);
 
+                    // 커서 기반 조건 생성 및 추가
                     Predicate compound = buildCursorPredicate(cb, root, sortField, cursorValue, idAfter, isAsc);
                     if (compound != null) {
                         predicates.add(compound);
+                        log.info("[AutoSyncSpec] Cursor predicate added");
+                    } else {
+                        log.warn("[AutoSyncSpec] No predicate built for sortField: {}", sortField);
                     }
                 } catch (Exception e) {
-                    log.error("커서 디코딩 또는 조건 생성 실패", e);
+                    log.error("[AutoSyncSpec] Cursor decode or predicate creation failed", e);
                 }
             }
 

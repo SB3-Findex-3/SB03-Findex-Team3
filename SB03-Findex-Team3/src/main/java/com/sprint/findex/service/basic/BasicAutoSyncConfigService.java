@@ -101,7 +101,7 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             default -> "id";
         };
 
-        // 제 처리 방식은 이렇게 (단, indexInfo.indexName은 JPA에서 불가능하므로 fallback 필요)
+        // 처리 방식은 이렇게 (단, indexInfo.indexName은 JPA에서 불가능하므로 fallback 필요)
         Sort sort;
         if ("indexName".equals(sortField)) {
             // 여기서는 "indexInfo.indexName" 말고 DB에 실제 조인 후 정렬하는 방식이 필요

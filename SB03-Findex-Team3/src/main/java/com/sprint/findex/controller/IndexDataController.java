@@ -1,5 +1,6 @@
 package com.sprint.findex.controller;
 
+import com.sprint.findex.controller.api.IndexDataApi;
 import com.sprint.findex.dto.dashboard.IndexChartDto;
 import com.sprint.findex.dto.dashboard.IndexPerformanceDto;
 import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
@@ -36,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/index-data")
 @RequiredArgsConstructor
 @Slf4j
-public class IndexDataController {
+public class IndexDataController implements IndexDataApi {
 
     private final IndexDataService indexDataService;
     private final IndexInfoRepository indexInfoRepository;
@@ -131,6 +132,7 @@ public class IndexDataController {
         return ResponseEntity.ok(chartData);
     }
 
+    @Override
     @GetMapping("/performance/favorite")
     public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexPerformances(
         @RequestParam(value = "periodType", defaultValue = "DAILY") Period period ) {

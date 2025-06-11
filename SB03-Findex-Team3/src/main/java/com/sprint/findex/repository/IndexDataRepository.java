@@ -25,6 +25,4 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
     Optional<IndexData> findByIndexInfoIdAndBaseDateOnlyDateMatch(
         @Param("indexInfoId") Long indexInfoId,
         @Param("baseDate") LocalDate baseDate);
-
 }
-

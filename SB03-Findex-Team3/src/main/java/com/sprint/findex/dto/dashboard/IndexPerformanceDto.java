@@ -5,6 +5,7 @@ import com.sprint.findex.entity.IndexInfo;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+
 public record IndexPerformanceDto(
     Long indexInfoId,
     String indexClassification,
@@ -15,12 +16,7 @@ public record IndexPerformanceDto(
     BigDecimal beforePrice
 ) {
     public static IndexPerformanceDto of(IndexInfo info, IndexData current, IndexData before) {
-        if (current == null || before == null) { return null; }
-
-        // 0으로 나누기 방지
-        if (before.getClosingPrice().compareTo(BigDecimal.ZERO) == 0) {
-            return null; // 또는 적절한 기본값 설정
-        }
+        if (current == null || before == null) return null;
 
         BigDecimal versus = current.getClosingPrice().subtract(before.getClosingPrice());
         BigDecimal fluctuationRate = versus.divide(before.getClosingPrice(), 4, RoundingMode.HALF_UP)

@@ -458,11 +458,33 @@ public class BasicSyncJobService implements SyncJobService {
     private Mono<SyncJobDto> handleError(Throwable e, IndexDataSyncRequest request, Long indexInfoId, String workerIp) {
         log.error("❌ Sync failed: indexInfoId={}, range={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
 
-        IndexInfo indexInfo = new IndexInfo("indexName", "description", 0, LocalDate.now(), BigDecimal.valueOf(0), SourceType.OPEN_API, true);
+        // 실제 IndexInfo 조회 시도
+        IndexInfo indexInfo = null;
+        try {
+            indexInfo = indexInfoRepository.findById(indexInfoId).orElse(null);
+        } catch (Exception ex) {
+            log.error("Failed to fetch IndexInfo for error handling", ex);
+        }
+
+        // 조회 실패 시 임시 객체 생성
+        if (indexInfo == null) {
+            indexInfo = new IndexInfo(
+                "Unknown",
+                "Unknown",
+                0,
+                LocalDate.now(),
+                BigDecimal.valueOf(0),
+                SourceType.OPEN_API,
+                false
+            );
+            // ID 설정이 필요하면 여기서 설정
+        }
 
         SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, request.baseDateFrom(), workerIp, OffsetDateTime.now(), SyncJobResult.FAILED);
         syncJobRepository.save(job);
 
         return Mono.just(toDto(job));
     }
+
+
 }

@@ -1,14 +1,20 @@
 package com.sprint.findex.controller;
 
+import com.sprint.findex.controller.api.IndexDataApi;
+import com.sprint.findex.dto.dashboard.IndexChartDto;
+import com.sprint.findex.dto.dashboard.IndexPerformanceDto;
+import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
+import com.sprint.findex.entity.Period;
+import com.sprint.findex.repository.IndexDataRepository;
+import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/index-data")
 @RequiredArgsConstructor
 @Slf4j
-public class IndexDataController {
+public class IndexDataController implements IndexDataApi {
 
     private final IndexDataService indexDataService;
+    private final IndexInfoRepository indexInfoRepository;
+    private final IndexDataRepository indexDataRepository;
 
     @PostMapping
     public ResponseEntity<IndexDataDto> create(@RequestBody IndexDataCreateRequest request) {
@@ -113,6 +121,33 @@ public class IndexDataController {
 
         name.append(".csv");
         return name.toString();
+    }
+
+    @GetMapping("/{id}/chart")
+    public ResponseEntity<IndexChartDto> getChartData(
+        @PathVariable("id") Long indexInfoId,
+        @RequestParam(value = "periodType", defaultValue = "DAILY") Period period) {
+
+        IndexChartDto chartData = indexDataService.getIndexChart(indexInfoId, period);
+        return ResponseEntity.ok(chartData);
+    }
+
+    @Override
+    @GetMapping("/performance/favorite")
+    public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexPerformances(
+        @RequestParam(value = "periodType", defaultValue = "DAILY") Period period ) {
+        List<IndexPerformanceDto> result = indexDataService.getFavoriteIndexPerformances(period);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/performance/rank")
+    public ResponseEntity<List<RankedIndexPerformanceDto>> getPerformanceRank(
+        @RequestParam(required = false) Long indexInfoId,
+        @RequestParam(value = "periodType", defaultValue = "DAILY") Period period,
+        @RequestParam(defaultValue = "10") int limit
+    ) {
+        List<RankedIndexPerformanceDto> result = indexDataService.getIndexPerformanceRank(indexInfoId, period, limit);
+        return ResponseEntity.ok(result);
     }
 
 }

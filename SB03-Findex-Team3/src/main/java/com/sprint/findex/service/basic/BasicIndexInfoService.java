@@ -40,7 +40,9 @@ public class BasicIndexInfoService implements IndexInfoService {
 
     @Override
     public IndexInfoDto createIndexInfo(IndexInfoCreateCommand command) {
-        return null;
+        IndexInfo indexInfo = IndexInfo.create(command);
+        IndexInfo savedIndexInfo = indexInfoRepository.save(indexInfo);
+        return indexInfoMapper.toDto(savedIndexInfo);
     }
 
     @Override
@@ -66,9 +68,10 @@ public class BasicIndexInfoService implements IndexInfoService {
             indexInfo.updateBaseIndex(updateDto.baseIndex());
         }
 
-        if(!updateDto.favorite() == indexInfo.isFavorite()){
+        if(updateDto.favorite() != null && updateDto.favorite() != indexInfo.isFavorite()){
             indexInfo.updateFavorite(updateDto.favorite());
         }
+
 
         return indexInfoMapper.toDto(indexInfo);
     }

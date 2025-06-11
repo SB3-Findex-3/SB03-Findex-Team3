@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 @Tag(name = "지수 정보 API", description = "지수 정보 관리 API")
 public interface IndexInfoApi {
 
-    @Operation(summary = "지수 정보 생성", description = "새로운 지수 정보를 생성합니다.")
+    @Operation(summary = "지수 정보 등록", description = "새로운 지수 정보를 생성합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "지수 정보 생성 성공",
             content = @Content(schema = @Schema(implementation = IndexInfoDto.class))),

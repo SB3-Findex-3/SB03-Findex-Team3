@@ -61,20 +61,16 @@ public class IndexInfoController implements IndexInfoApi {
         @RequestParam(required = false) String indexClassification,
         @RequestParam(required = false) String indexName,
         @RequestParam(required = false) Boolean favorite,
-        @RequestParam(required = false) Long idAfter,
+        @RequestParam(required = false) String idAfter,
         @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "indexClassification", required = false) String sortField,
         @RequestParam(defaultValue = "asc", required = false) String sortDirection,
-        @RequestParam(defaultValue = "10", required = false) int size
+        @RequestParam(defaultValue = "20", required = false) int size
     ) {
         try {
             IndexInfoSearchDto searchDto = indexInfoSearchMapper.toDto(
                 indexClassification, indexName, favorite, idAfter, cursor, sortField, sortDirection, size
             );
-
-            log.info("IndexInfoController: 지수 정보 목록 조회 요청 -> classification: {}, name: {}, favorite: {}, " +
-                    "idAfter: {}, cursor: {}, sort: {} {}, size: {}",
-                indexClassification, indexName, favorite, idAfter, cursor, sortField, sortDirection, size);
 
             CursorPageResponseIndexInfoDto response = indexInfoService.findIndexInfoByCursor(searchDto);
             return ResponseEntity.status(HttpStatus.OK).body(response);

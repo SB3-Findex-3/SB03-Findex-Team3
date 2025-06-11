@@ -456,7 +456,7 @@ public class BasicSyncJobService implements SyncJobService {
     }
 
     private Mono<SyncJobDto> handleError(Throwable e, IndexDataSyncRequest request, Long indexInfoId, String workerIp) {
-        log.error("❌ Sync failed: indexInfoId={}, range={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
+        log.error("동기화 실패: indexInfoId={}, 기간={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
 
         // 실제 IndexInfo 조회 시도
         IndexInfo indexInfo = null;
@@ -482,7 +482,7 @@ public class BasicSyncJobService implements SyncJobService {
 
         SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, request.baseDateFrom(), workerIp, OffsetDateTime.now(), SyncJobResult.FAILED);
         syncJobRepository.save(job);
-
+      
         return Mono.just(toDto(job));
     }
 

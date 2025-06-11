@@ -9,24 +9,19 @@ import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.mapper.AutoSyncConfigMapper;
 import com.sprint.findex.repository.AutoSyncConfigRepository;
-import com.sprint.findex.repository.AutoSyncConfigSpecifications;
+import com.sprint.findex.specification.AutoSyncConfigSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.AutoSyncConfigService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -48,24 +43,19 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
 
         return autoSyncConfigRepository.findById(id)
             .map(config -> {
-                config.setEnabled(enabled); // 기존 설정 업데이트
-                AutoSyncConfig updatedConfig = autoSyncConfigRepository.save(config);
-
-                return autoSyncConfigMapper.toDto(updatedConfig);
+                config.setEnabled(enabled);
+                return autoSyncConfigMapper.toDto(autoSyncConfigRepository.save(config));
             })
             .orElseGet(() -> {
                 IndexInfo indexInfo = indexInfoRepository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("IndexInfo with id " + id + " not found"));
 
-                AutoSyncConfig newAutoSyncConfig = AutoSyncConfig.ofIndexInfo(indexInfo);
-                newAutoSyncConfig.setEnabled(enabled);
-                autoSyncConfigRepository.save(newAutoSyncConfig);
-
-                AutoSyncConfigDto newAutoSyncConfigDto = autoSyncConfigMapper.toDto(newAutoSyncConfig);
-
-                return newAutoSyncConfigDto;
+                AutoSyncConfig newConfig = AutoSyncConfig.ofIndexInfo(indexInfo);
+                newConfig.setEnabled(enabled);
+                return autoSyncConfigMapper.toDto(autoSyncConfigRepository.save(newConfig));
             });
     }
+
     @Override
     public CursorPageResponseAutoSyncConfigDto findByCursor(AutoSyncQueryParams params) {
         int pageSize = (params.size() != null && params.size() > 0) ? params.size() : DEFAULT_PAGE_SIZE;
@@ -92,28 +82,30 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
     }
 
     private Pageable resolvePageable(AutoSyncQueryParams params, int pageSize) {
-        String sortField = params.sortField() != null ? params.sortField() : DEFAULT_SORT_FIELD;
-        String sortDir = params.sortDirection() != null ? params.sortDirection() : DEFAULT_SORT_DIRECTION;
+        String sortField = Optional.ofNullable(params.sortField()).orElse(DEFAULT_SORT_FIELD);
+        String sortDir = Optional.ofNullable(params.sortDirection()).orElse(DEFAULT_SORT_DIRECTION);
         Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        Sort sort;
-        if ("indexInfo.indexName".equals(sortField)) {
-            sort = Sort.by(direction, "indexInfo.indexName");
-        } else {
-            sort = Sort.by(direction, sortField);
-        }
-        sort = sort.and(Sort.by(Sort.Direction.ASC, "id"));
+        String mappedField = switch (sortField) {
+            case "indexName" -> "indexInfo.indexName";
+            case "enabled" -> "enabled";
+            default -> "id";
+        };
+
+        Sort sort = Sort.by(direction, mappedField);
+        sort = sort.and(Sort.by(Sort.Direction.ASC, "id")); // tie-breaker
 
         return PageRequest.of(0, pageSize, sort);
     }
+
     private String buildCursor(List<AutoSyncConfig> results, String sortField) {
         if (results.isEmpty()) return null;
 
         AutoSyncConfig last = results.get(results.size() - 1);
-        Object cursorValue = switch (sortField != null ? sortField : DEFAULT_SORT_FIELD) {
-            case "indexInfo.indexName" -> last.getIndexInfo().getIndexName();
+        Object cursorValue = switch (Optional.ofNullable(sortField).orElse(DEFAULT_SORT_FIELD)) {
+            case "indexInfo.indexName", "indexName" -> last.getIndexInfo().getIndexName();
             case "enabled" -> last.isEnabled();
-            default -> null;
+            default -> last.getId();
         };
 
         return encodeCursor(Map.of("value", cursorValue));
@@ -131,9 +123,8 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             String json = mapper.writeValueAsString(data);
             return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            log.error("커서 인코딩 실패", e);
+            log.error("Failed to encode cursor", e);
             return null;
         }
     }
 }
-

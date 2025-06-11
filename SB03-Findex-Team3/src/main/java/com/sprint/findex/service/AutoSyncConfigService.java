@@ -4,7 +4,6 @@ import com.sprint.findex.dto.request.AutoSyncConfigUpdateRequest;
 import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
 import com.sprint.findex.dto.response.CursorPageResponseAutoSyncConfigDto;
-import com.sprint.findex.entity.IndexInfo;
 
 public interface AutoSyncConfigService {
 

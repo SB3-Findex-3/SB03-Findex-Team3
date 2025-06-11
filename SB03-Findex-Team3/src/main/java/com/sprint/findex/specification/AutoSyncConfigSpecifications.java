@@ -16,6 +16,11 @@ public class AutoSyncConfigSpecifications {
 
     private static final Logger log = LoggerFactory.getLogger(AutoSyncConfigSpecifications.class);
 
+    private static final String DEFAULT_SORT_FIELD = "indexInfo.indexName";
+    private static final String DEFAULT_SORT_DIRECTION = "asc";
+    private static final String SORT_INDEX_NAME = "indexInfo.indexName";
+    private static final String SORT_ENABLED = "enabled";
+
     public static Specification<AutoSyncConfig> withFilters(AutoSyncQueryParams params) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -23,37 +28,42 @@ public class AutoSyncConfigSpecifications {
             if (params.indexInfoId() != null) {
                 predicates.add(cb.equal(root.get("indexInfo").get("id"), params.indexInfoId()));
             }
+
             if (params.enabled() != null) {
                 predicates.add(cb.equal(root.get("enabled"), params.enabled()));
             }
 
-            if (params.cursor() != null && params.idAfter() != null && params.sortField() != null) {
+            String sortField = getOrDefault(params.sortField(), DEFAULT_SORT_FIELD);
+            String sortDirection = getOrDefault(params.sortDirection(), DEFAULT_SORT_DIRECTION);
+            boolean isAsc = "asc".equalsIgnoreCase(sortDirection);
+
+            log.info("[withFilters] 받은 cursor 파라미터: {}", params.cursor());
+            log.info("[withFilters] 받은 idAfter 파라미터: {}", params.idAfter());
+            log.info("[withFilters] 받은 sortField: {}", sortField);
+
+            if (params.cursor() != null && params.idAfter() != null) {
                 try {
                     ObjectMapper mapper = new ObjectMapper();
 
-                    // cursor 디코딩
                     String decodedCursorJson = new String(Base64.getDecoder().decode(params.cursor()), StandardCharsets.UTF_8);
+                    log.info("decoded cursor JSON: {}", decodedCursorJson);
                     Map<String, Object> cursorMap = mapper.readValue(decodedCursorJson, Map.class);
                     Object cursorValue = cursorMap.get("value");
 
-                    // idAfter 디코딩
-                    String decodedIdJson = new String(Base64.getDecoder().decode(params.idAfter()), StandardCharsets.UTF_8);
+                    String decodedIdJson = new String(Base64.getDecoder().decode(params.idAfter().toString()), StandardCharsets.UTF_8);
+                    log.info("decoded idAfter JSON: {}", decodedIdJson);
                     Map<String, Object> idMap = mapper.readValue(decodedIdJson, Map.class);
                     Long idAfter = Optional.ofNullable(idMap.get("id"))
                         .map(Object::toString)
                         .map(Long::valueOf)
-                        .orElseThrow(() -> new IllegalArgumentException("❌ idAfter 디코딩 실패"));
-
-                    String sortField = params.sortField();
-                    boolean isAsc = "asc".equalsIgnoreCase(params.sortDirection());
+                        .orElseThrow(() -> new IllegalArgumentException("idAfter 디코딩 실패"));
 
                     Predicate compound = buildCursorPredicate(cb, root, sortField, cursorValue, idAfter, isAsc);
                     if (compound != null) {
                         predicates.add(compound);
                     }
-
                 } catch (Exception e) {
-                    log.error("❌ 커서 디코딩 또는 조건 생성 실패", e);
+                    log.error("커서 디코딩 또는 조건 생성 실패", e);
                 }
             }
 
@@ -61,32 +71,34 @@ public class AutoSyncConfigSpecifications {
         };
     }
 
-    private static Predicate buildCursorPredicate(CriteriaBuilder cb,
+    private static Predicate buildCursorPredicate(
+        CriteriaBuilder cb,
         Root<AutoSyncConfig> root,
         String sortField,
         Object cursorValue,
         Long idAfter,
         boolean isAsc) {
+
         Path<?> sortPath;
         Join<AutoSyncConfig, IndexInfo> indexInfoJoin = null;
 
         switch (sortField) {
-            case "indexInfo.indexName" -> {
+            case SORT_INDEX_NAME -> {
                 indexInfoJoin = root.join("indexInfo", JoinType.INNER);
                 sortPath = indexInfoJoin.get("indexName");
             }
-            case "enabled" -> {
+            case SORT_ENABLED -> {
                 sortPath = root.get("enabled");
             }
             default -> {
-                log.warn("⚠️ 지원하지 않는 정렬 필드: {}", sortField);
+                log.warn("지원하지 않는 정렬 필드: {}", sortField);
                 return null;
             }
         }
 
         Path<Long> idPath = root.get("id");
 
-        Predicate mainSortPredicate = isAsc
+        Predicate mainPredicate = isAsc
             ? cb.greaterThan((Path<Comparable>) sortPath, (Comparable) cursorValue)
             : cb.lessThan((Path<Comparable>) sortPath, (Comparable) cursorValue);
 
@@ -94,6 +106,10 @@ public class AutoSyncConfigSpecifications {
             ? cb.and(cb.equal(sortPath, cursorValue), cb.greaterThan(idPath, idAfter))
             : cb.and(cb.equal(sortPath, cursorValue), cb.lessThan(idPath, idAfter));
 
-        return cb.or(mainSortPredicate, tieBreaker);
+        return cb.or(mainPredicate, tieBreaker);
+    }
+
+    private static String getOrDefault(String value, String defaultValue) {
+        return (value != null && !value.isBlank()) ? value : defaultValue;
     }
 }

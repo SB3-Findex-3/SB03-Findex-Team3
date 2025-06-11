@@ -13,7 +13,7 @@ import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
-import com.sprint.findex.repository.IndexDataSpecifications;
+import com.sprint.findex.specification.IndexDataSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +26,6 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j

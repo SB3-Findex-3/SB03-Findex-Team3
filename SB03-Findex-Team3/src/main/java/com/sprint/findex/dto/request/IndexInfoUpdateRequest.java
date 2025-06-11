@@ -7,7 +7,7 @@ public record IndexInfoUpdateRequest(
     Integer employedItemsCount,
     LocalDate basePointInTime,
     BigDecimal baseIndex,
-    boolean favorite
+    Boolean favorite
 ) {
 
 }

@@ -56,7 +56,7 @@ public class IndexInfoSyncService {
     public Mono<ApiResponse> fetchAndSaveIndexInfoAsync() {
         log.info("지수 정보 비동기 동기화 시작");
 
-        String url = buildApiUrl(1, 10);
+        String url = buildApiUrl(5, 200);
 
         return callApiBasic(url)
             .doOnNext(response -> {

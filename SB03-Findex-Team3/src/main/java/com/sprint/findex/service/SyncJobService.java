@@ -7,4 +7,7 @@ import reactor.core.publisher.Mono;
 
 public interface SyncJobService {
     Mono<List<SyncJobDto>> fetchAndSaveIndexData(IndexDataSyncRequest request, String workerIp);
+
+    Mono<List<SyncJobDto>> fetchAllIndexInfo(String workerIp);
+
 }

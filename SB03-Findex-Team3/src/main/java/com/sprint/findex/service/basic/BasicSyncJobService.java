@@ -1,6 +1,10 @@
 package com.sprint.findex.service.basic;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.findex.dto.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
+import com.sprint.findex.dto.request.SyncJobQueryParams;
+import com.sprint.findex.dto.response.CursorPageResponseSyncJobDto;
 import com.sprint.findex.dto.response.SyncJobDto;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
@@ -10,10 +14,12 @@ import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.global.dto.MarketIndexResponse;
+import com.sprint.findex.mapper.SyncJobMapper;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
 import com.sprint.findex.service.SyncJobService;
+import com.sprint.findex.specification.SyncJobSpecifications;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,6 +29,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +37,12 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +60,8 @@ public class BasicSyncJobService implements SyncJobService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
     private final SyncJobRepository syncJobRepository;
+    private final SyncJobMapper syncJobMapper;
+    private final ObjectMapper objectMapper;
 
     @Value("${api.data.service-key}")
     private String serviceKey;
@@ -93,288 +108,6 @@ public class BasicSyncJobService implements SyncJobService {
             .orElseThrow(() -> new IllegalArgumentException("Invalid IndexInfo ID: " + indexInfoId)));
     }
 
-    // 1. 컨트롤러에 List<SyncJobDto>를 반환해주는 메서드
-
-    @Override
-    public Mono<List<SyncJobDto>> fetchAllIndexInfo(String workerIp){
-
-        String settingWorkerIp = (workerIp == null || workerIp.isBlank()) ? SYSTEM_WORKER : workerIp;
-
-        return fetchAllIndexInfosFromApi()
-            .map(items -> processIndexInfoSync(items, settingWorkerIp))
-            .doOnSuccess(syncJobs ->
-                log.info("지수 정보 연동 성공"))
-            .doOnError(error ->
-                log.error("지수 정보 연동 실패", error))
-
-            .onErrorResume(error ->
-                handleIndexInfoSyncError(error, settingWorkerIp));
-    }
-
-    // 2.  데이터를 불러오고 응답 데이터의 지수 정보 부분을 리스트로 반환
-    private Mono<List<ApiResponse.StockIndexItem>> fetchAllIndexInfosFromApi() {
-
-        // 원래는 buildUrl 메서드로 요청 Url 생성하는 부분을 따로 뺐는데
-        // 굳이? 싶어서 로직에 직접 넣음 -> 다시 빼도 됨
-        String url = String.format("%s/getStockMarketIndex?serviceKey=%s&resultType=json&pageNo=%d&numOfRows=%d",
-            baseUrl, serviceKey, 1, 200);
-
-        // API 요청 결과 (json 응답)을 받아서 지수 정보만 추출한 뒤 List에 저장하는 로직
-        return callApi(url)
-            .flatMap(firstResponse -> {
-                // StockIndexItem: 내가 받아올 지수 정보들만 필드로 선언해둔 클래스
-                List<ApiResponse.StockIndexItem> allItems = new ArrayList<>();
-
-                if (firstResponse.getBody() != null && firstResponse.getBody().getItems() != null) {
-                    allItems.addAll(firstResponse.getBody().getItems().getItem());
-                }
-
-                return Mono.just(allItems);
-            });
-    }
-
-    // 3. 메인 로직 (API 요청 로직)
-    private Mono<ApiResponse> callApi(String url) {
-        try{
-            URI uri = new URI(url);
-            log.info("API 호출: {}", url.replaceAll("serviceKey=[^&]*", "serviceKey=****"));
-
-            return marketIndexWebClient.get()
-                .uri(uri)
-                .accept(MediaType.APPLICATION_JSON)  // JSON 요청
-                .retrieve()
-                .bodyToMono(ApiResponse.class)
-                .retry(2)
-                .doOnNext(response -> System.out.println("API 호출 성공!")) // JSON → ApiResponse 객체로 변환
-                .doOnError(error -> System.out.println("API 호출 실패: " + error.getMessage()));
-
-        }catch (URISyntaxException e) {
-            log.error("URI 변환 실패: {}", url, e);
-            return Mono.error(new RuntimeException("URI 변환 실패: " + e.getMessage()));
-        }
-    }
-
-    // 4. 응답 받은 데이터를 활용해서 SyncJobDto 리스트 반환
-    // List<ApiResponse.StockIndexItem> -> 지수 정보 데이터의 List
-    // workerIp -> 작업자 ip
-    private List<SyncJobDto> processIndexInfoSync(List<ApiResponse.StockIndexItem> items, String workerIp){
-
-        // 중복 제거를 위한 set
-        Set<String> processedKeys = new HashSet<>();
-        List<ApiResponse.StockIndexItem> uniqueItems = new ArrayList<>();
-
-        // <문제>
-        // 데이터를 200개 요청 -> 하지만 응답 된 데이터는 200개보다 작음
-        // 예상 결과: 응답된 데이터만 처리한다
-        // 실제 결과: 응답된 데이터를 처리하고 (200 - 응답 데이터) 개수 만큼을 다시 처리함 (응답데이터의 1번부터 다시)
-        // 처리 방법: 들어온 응답데이터의 IndexInfo 유니크 정보 (지수분류명, 지수명)을 보고
-        // 이미 존재하는 데이터면 모든 값이 일치하는지 확인 -> 다르면 업데이트
-        //  -> 같으면 아무것도 하지 말고 그냥 continue로 넘어가기
-        // 이렇게 처리하자 처음 요청 때는 응답이 잘 반영되고
-        // SyncJobDto 리스트 반환도 잘 됐지만
-        // 그 후 연동은 다 SyncJobDto가 생성되지 않음
-
-        // <해결>
-        // 처음부터 중복을 없애버리도록 함
-        // Set을 사용해서 유니크 키가 같은 데이터가 들어오는지 검증
-        // 검증된 정보만 uniqueItems 리스트에 넣음
-        for (ApiResponse.StockIndexItem item : items) {
-            String key = item.getIndexClassification() + "|" + item.getIndexName();
-            if (processedKeys.add(key)) {
-                uniqueItems.add(item);
-            }
-        }
-
-        List<IndexInfo> allIndexInfo = indexInfoRepository.findAll();
-        List<SyncJobDto> syncJobs = new ArrayList<>();
-
-        for (ApiResponse.StockIndexItem item: uniqueItems){
-            try {
-                IndexInfo existing = findExisting(item);
-                IndexInfo indexInfo;
-
-                // 동일한 데이터가 이미 존재할 때
-                if (existing != null) {
-                    indexInfo = updateExisting(existing, item);
-
-                    // 기존 데이터와 비교해서 변경사항이 있는지 확인
-                    if (hasChanged(existing, item)) {
-                        indexInfo = updateExisting(existing, item);
-                        indexInfoRepository.save(indexInfo);
-                    }
-                    else {
-                        indexInfo = existing;
-                    }
-
-                } else {
-                    indexInfo = createNewIndexInfo(item);
-                    allIndexInfo.add(indexInfo);
-                    IndexInfo savedInfo = indexInfoRepository.save(indexInfo);
-                }
-
-                SyncJob newSyncJob = createSyncJob(indexInfo, workerIp);
-                SyncJob savedSyncJob = syncJobRepository.save(newSyncJob);
-                SyncJobDto syncJobDto = createSyncJobDto(savedSyncJob);
-                syncJobs.add(syncJobDto);
-
-            }catch (Exception e){
-                log.error("불러온 지수 정보 처리 실패", e);
-
-                SyncJobDto failed = createFailedSyncJobDto(item, workerIp);
-                syncJobs.add(failed);
-            }
-        }
-
-        return syncJobs;
-    }
-
-    // 5. 값 일치, 객체 생성 등의 로직
-
-    private IndexInfo findExisting(ApiResponse.StockIndexItem item) {
-        return indexInfoRepository
-            .findByIndexClassificationAndIndexName(item.getIndexClassification(), item.getIndexName())
-            .orElse(null);
-    }
-
-    private IndexInfo createNewIndexInfo(ApiResponse.StockIndexItem item) {
-
-        return new IndexInfo(
-            item.getIndexClassification(),
-            item.getIndexName(),
-            parseInteger(item.getEmployedItemsCount()),
-            parseDate(item.getBasePointTime()),
-            parseBigDecimal(item.getBaseIndex()),
-            SourceType.OPEN_API,
-            false
-        );
-    }
-
-    private SyncJob createSyncJob(IndexInfo indexInfo, String workerIp){
-
-        return new SyncJob(
-            SyncJobType.INDEX_INFO,
-            indexInfo,
-            null,
-            workerIp,
-            OffsetDateTime.now(),
-            SyncJobResult.SUCCESS
-        );
-    }
-
-    // 연동 성공 SyncJob DTO
-    private SyncJobDto createSyncJobDto(SyncJob syncJob) {
-
-        return new SyncJobDto(
-            syncJob.getId(),
-            syncJob.getJobType(),
-            syncJob.getIndexInfo().getId(),
-            syncJob.getTargetDate(),
-            syncJob.getWorker(),
-            syncJob.getJobTime(),
-            syncJob.getResult()
-        );
-    }
-
-    // 연동 실패 DTO
-    private SyncJobDto createFailedSyncJobDto(ApiResponse.StockIndexItem item, String workerIp) {
-
-        return new SyncJobDto(
-            null,
-            SyncJobType.INDEX_INFO,
-            null,
-            null,
-            workerIp,
-            OffsetDateTime.now(),
-            SyncJobResult.FAILED
-        );
-    }
-
-    private IndexInfo updateExisting(IndexInfo existing, ApiResponse.StockIndexItem item) {
-        existing.updateIndexClassification(item.getIndexClassification());
-        existing.updateIndexName(item.getIndexName());
-        existing.updateEmployedItemsCount(parseInteger(item.getEmployedItemsCount()));
-        existing.updateBaseIndex(parseBigDecimal(item.getBaseIndex()));
-        existing.updateBasePointInTime(parseDate(item.getBasePointTime()));
-        return existing;
-    }
-
-    // 6. 정보 동기화 실패 시 반환해주는 에러 메소드
-
-    private Mono<List<SyncJobDto>> handleIndexInfoSyncError(Throwable error, String workerIp) {
-        log.error("지수 정보 동기화 실패", error);
-
-        // 실패 SyncJob 생성
-        SyncJob failedJob = new SyncJob(
-            SyncJobType.INDEX_INFO,
-            null,
-            null,
-            workerIp,
-            OffsetDateTime.now(),
-            SyncJobResult.FAILED
-        );
-        syncJobRepository.save(failedJob);
-
-        SyncJobDto failedJobDto = new SyncJobDto(
-            failedJob.getId(),
-            failedJob.getJobType(),
-            null,
-            failedJob.getTargetDate(),
-            failedJob.getWorker(),
-            failedJob.getJobTime(),
-            failedJob.getResult()
-        );
-
-        return Mono.just(List.of(failedJobDto));
-    }
-
-    // 7. 파싱 메서드
-
-    private LocalDate parseDate(String dateString) {
-        if (dateString == null || dateString.trim().isEmpty()) {
-            log.warn("기준시점이 비어있습니다. 현재 날짜를 사용합니다.");
-            return LocalDate.now();
-        }
-        try {
-            return LocalDate.parse(dateString.trim(), DATE_FORMATTER);
-        } catch (Exception e) {
-            log.warn("날짜 파싱 실패: {}, 현재 날짜 사용", dateString);
-            return LocalDate.now();
-        }
-    }
-
-    private BigDecimal parseBigDecimal(String value) {
-        if (value == null || value.trim().isEmpty() || "-".equals(value.trim())) {
-            return null;
-        }
-        try {
-            // 콤마, 공백 제거 후 변환
-            return new BigDecimal(value.replaceAll(",", "").trim());
-        } catch (NumberFormatException e) {
-            log.warn("BigDecimal 파싱 실패: {}, null 반환", value);
-            return null;
-        }
-    }
-
-    private Integer parseInteger(String value) {
-        if (value == null || value.trim().isEmpty() || "-".equals(value.trim())) {
-            return 0;
-        }
-        try {
-            return Integer.parseInt(value.replaceAll(",", "").trim());
-        } catch (NumberFormatException e) {
-            log.warn("정수 파싱 실패: {}, 기본값 0 사용", value);
-            return 0;
-        }
-    }
-
-    private boolean hasChanged(IndexInfo existing, ApiResponse.StockIndexItem item){
-        return !existing.getIndexClassification().equals(item.getIndexClassification()) ||
-            !existing.getIndexName().equals(item.getIndexName()) ||
-            !Objects.equals(existing.getEmployedItemsCount(), parseInteger(item.getEmployedItemsCount())) ||
-            !Objects.equals(existing.getBaseIndex(), parseBigDecimal(item.getBaseIndex())) ||
-            !existing.getBasePointInTime().equals(parseDate(item.getBasePointTime()));
-    }
-
     private Mono<List<MarketIndexResponse.MarketIndexData>> fetchMarketIndexData(IndexDataSyncRequest request, IndexInfo indexInfo) {
         String url = createMarketIndexUrl(request, indexInfo);
         log.debug("📡 API URI: {}", url);
@@ -412,6 +145,7 @@ public class BasicSyncJobService implements SyncJobService {
 
         return Flux.merge(jobMonos).collectList();
     }
+
 
     private LocalDate parseBaseDate(String basDt) {
         return LocalDate.parse(basDt, DATE_FORMATTER);
@@ -479,12 +213,358 @@ public class BasicSyncJobService implements SyncJobService {
             );
             // ID 설정이 필요하면 여기서 설정
         }
-
         SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, request.baseDateFrom(), workerIp, OffsetDateTime.now(), SyncJobResult.FAILED);
         syncJobRepository.save(job);
-      
+
         return Mono.just(toDto(job));
     }
 
+    @Override
+    public Mono<List<SyncJobDto>> fetchAllIndexInfo(String workerIp){
+
+        String settingWorkerIp = (workerIp == null || workerIp.isBlank()) ? SYSTEM_WORKER : workerIp;
+
+        return fetchAllIndexInfosFromApi()
+            .map(items -> processIndexInfoSync(items, settingWorkerIp))
+            .doOnSuccess(syncJobs ->
+                log.info("지수 정보 연동 성공"))
+            .doOnError(error ->
+                log.error("지수 정보 연동 실패", error))
+
+            // (.onErrorResume 이게 뭔지 확인해보기)
+            .onErrorResume(error ->
+                handleIndexInfoSyncError(error, settingWorkerIp));
+    }
+
+    private Mono<List<ApiResponse.StockIndexItem>> fetchAllIndexInfosFromApi() {
+
+        String url = String.format("%s/getStockMarketIndex?serviceKey=%s&resultType=json&pageNo=%d&numOfRows=%d",
+            baseUrl, serviceKey, 1, 200);
+
+        return callApi(url)
+            .flatMap(firstResponse -> {
+                List<ApiResponse.StockIndexItem> allItems = new ArrayList<>();
+
+                if (firstResponse.getBody() != null && firstResponse.getBody().getItems() != null) {
+                    allItems.addAll(firstResponse.getBody().getItems().getItem());
+                }
+
+                return Mono.just(allItems);
+            });
+    }
+
+    private Mono<ApiResponse> callApi(String url) {
+        try{
+            URI uri = new URI(url);
+            log.info("API 호출: {}", url.replaceAll("serviceKey=[^&]*", "serviceKey=****"));
+
+            return marketIndexWebClient.get()
+                .uri(uri)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(ApiResponse.class)
+                .retry(2)
+                .doOnNext(response -> System.out.println("API 호출 성공!"))
+                .doOnError(error -> System.out.println("API 호출 실패: " + error.getMessage()));
+
+        }catch (URISyntaxException e) {
+            log.error("URI 변환 실패: {}", url, e);
+            return Mono.error(new RuntimeException("URI 변환 실패: " + e.getMessage()));
+        }
+    }
+
+    private List<SyncJobDto> processIndexInfoSync(List<ApiResponse.StockIndexItem> items, String workerIp){
+
+        Set<String> processedKeys = new HashSet<>();
+        List<ApiResponse.StockIndexItem> uniqueItems = new ArrayList<>();
+
+        for (ApiResponse.StockIndexItem item : items) {
+            String key = item.getIndexClassification() + "|" + item.getIndexName();
+            if (processedKeys.add(key)) {
+                uniqueItems.add(item);
+            }
+        }
+
+        List<IndexInfo> allIndexInfo = indexInfoRepository.findAll();
+        List<SyncJobDto> syncJobs = new ArrayList<>();
+
+        for (ApiResponse.StockIndexItem item: uniqueItems){
+            try {
+                IndexInfo existing = findExisting(item);
+                IndexInfo indexInfo;
+
+                if (existing != null) {
+                    indexInfo = updateExisting(existing, item);
+
+                    if (hasChanged(existing, item)) {
+                        indexInfo = updateExisting(existing, item);
+                        indexInfoRepository.save(indexInfo);
+                    }
+                    else {
+                        indexInfo = existing;
+                    }
+
+                } else {
+                    indexInfo = createNewIndexInfo(item);
+                    allIndexInfo.add(indexInfo);
+                    IndexInfo savedInfo = indexInfoRepository.save(indexInfo);
+                }
+
+                SyncJob newSyncJob = createSyncJob(indexInfo, workerIp);
+                SyncJob savedSyncJob = syncJobRepository.save(newSyncJob);
+                SyncJobDto syncJobDto = syncJobMapper.toDto(savedSyncJob);
+                syncJobs.add(syncJobDto);
+
+            }catch (Exception e){
+                log.error("불러온 지수 정보 처리 실패", e);
+
+                SyncJobDto failed = createFailedSyncJobDto(item, workerIp);
+                syncJobs.add(failed);
+            }
+        }
+
+        return syncJobs;
+    }
+
+    private IndexInfo findExisting(ApiResponse.StockIndexItem item) {
+        return indexInfoRepository
+            .findByIndexClassificationAndIndexName(item.getIndexClassification(), item.getIndexName())
+            .orElse(null);
+    }
+
+    private IndexInfo createNewIndexInfo(ApiResponse.StockIndexItem item) {
+
+        return new IndexInfo(
+            item.getIndexClassification(),
+            item.getIndexName(),
+            parseInteger(item.getEmployedItemsCount()),
+            parseDate(item.getBasePointTime()),
+            parseBigDecimal(item.getBaseIndex()),
+            SourceType.OPEN_API,
+            false
+        );
+    }
+
+    private SyncJob createSyncJob(IndexInfo indexInfo, String workerIp){
+
+        return new SyncJob(
+            SyncJobType.INDEX_INFO,
+            indexInfo,
+            null,
+            workerIp,
+            OffsetDateTime.now(),
+            SyncJobResult.SUCCESS
+        );
+    }
+
+    private SyncJobDto createFailedSyncJobDto(ApiResponse.StockIndexItem item, String workerIp) {
+
+        return new SyncJobDto(
+            null,
+            SyncJobType.INDEX_INFO,
+            null,
+            null,
+            workerIp,
+            OffsetDateTime.now(),
+            SyncJobResult.FAILED
+        );
+    }
+
+    private Mono<List<SyncJobDto>> handleIndexInfoSyncError(Throwable error, String workerIp) {
+        log.error("지수 정보 동기화 실패", error);
+
+        SyncJob failedJob = new SyncJob(
+            SyncJobType.INDEX_INFO,
+            null,
+            null,
+            workerIp,
+            OffsetDateTime.now(),
+            SyncJobResult.FAILED
+        );
+        syncJobRepository.save(failedJob);
+
+        SyncJobDto failedJobDto = new SyncJobDto(
+            failedJob.getId(),
+            failedJob.getJobType(),
+            null,
+            failedJob.getTargetDate(),
+            failedJob.getWorker(),
+            failedJob.getJobTime(),
+            failedJob.getResult()
+        );
+
+        return Mono.just(List.of(failedJobDto));
+    }
+
+    private LocalDate parseDate(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            log.warn("기준시점이 비어있습니다. 현재 날짜를 사용합니다.");
+            return LocalDate.now();
+        }
+        try {
+            return LocalDate.parse(dateString.trim(), DATE_FORMATTER);
+        } catch (Exception e) {
+            log.warn("날짜 파싱 실패: {}, 현재 날짜 사용", dateString);
+            return LocalDate.now();
+        }
+    }
+
+    private BigDecimal parseBigDecimal(String value) {
+        if (value == null || value.trim().isEmpty() || "-".equals(value.trim())) {
+            return null;
+        }
+        try {
+            // 콤마, 공백 제거 후 변환
+            return new BigDecimal(value.replaceAll(",", "").trim());
+        } catch (NumberFormatException e) {
+            log.warn("BigDecimal 파싱 실패: {}, null 반환", value);
+            return null;
+        }
+    }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.trim().isEmpty() || "-".equals(value.trim())) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.replaceAll(",", "").trim());
+        } catch (NumberFormatException e) {
+            log.warn("정수 파싱 실패: {}, 기본값 0 사용", value);
+            return 0;
+        }
+    }
+
+    private boolean hasChanged(IndexInfo existing, ApiResponse.StockIndexItem item){
+        return !existing.getIndexClassification().equals(item.getIndexClassification()) ||
+            !existing.getIndexName().equals(item.getIndexName()) ||
+            !Objects.equals(existing.getEmployedItemsCount(), parseInteger(item.getEmployedItemsCount())) ||
+            !Objects.equals(existing.getBaseIndex(), parseBigDecimal(item.getBaseIndex())) ||
+            !existing.getBasePointInTime().equals(parseDate(item.getBasePointTime()));
+    }
+
+    private IndexInfo updateExisting(IndexInfo existing, ApiResponse.StockIndexItem item) {
+        existing.updateIndexClassification(item.getIndexClassification());
+        existing.updateIndexName(item.getIndexName());
+        existing.updateEmployedItemsCount(parseInteger(item.getEmployedItemsCount()));
+        existing.updateBaseIndex(parseBigDecimal(item.getBaseIndex()));
+        existing.updateBasePointInTime(parseDate(item.getBasePointTime()));
+        return existing;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponseSyncJobDto findSyncJobByCursor(SyncJobQueryParams params){
+
+        ResponseSyncJobCursorDto responseSyncJobCursorDto = null;
+        if (params.cursor() != null){
+            responseSyncJobCursorDto = parseCurser(params.cursor());
+            log.info("IndexInfoService: 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}", responseSyncJobCursorDto);
+        }
+
+        Specification<SyncJob> spec = SyncJobSpecifications.withFilters(responseSyncJobCursorDto, params);
+        Specification<SyncJob> countSpec = SyncJobSpecifications.withFilters(null, params);
+
+        Sort sort = createSort(params.sortField(), params.sortDirection());
+        Pageable pageable = PageRequest.of(0, params.size(), sort);
+
+        Slice<SyncJob> slice = syncJobRepository.findAll(spec, pageable);
+
+        Long totalElements = syncJobRepository.count(countSpec);
+
+        return convertToResponse(slice, params, totalElements);
+    }
+
+    private Sort createSort(String sortField, String sortDirection){
+        Direction direction = "desc".equalsIgnoreCase(sortDirection)?
+            Direction.DESC : Direction.ASC;
+
+        return Sort.by(direction, sortField).and(Sort.by("id").ascending());
+    }
+
+    private CursorPageResponseSyncJobDto convertToResponse(Slice<SyncJob> slice, SyncJobQueryParams params, Long totalElements){
+
+        List<SyncJobDto> content = slice.getContent().stream()
+            .map(syncJobMapper::toDto)
+            .toList();
+
+        String nextCursor = null;
+        String nextIdAfter = null;
+
+        if (slice.hasNext() && !content.isEmpty()){
+            SyncJobDto lastSyncJob = content.get(content.size() - 1);
+            List<String> syncJobCursor = generateNextCursor(lastSyncJob, params.sortField());
+            nextCursor = syncJobCursor.get(0);
+            nextIdAfter = syncJobCursor.get(1);
+        }
+
+        return new CursorPageResponseSyncJobDto(
+            content,
+            nextCursor,
+            nextIdAfter,
+            params.size(),
+            totalElements,
+            slice.hasNext()
+        );
+    }
+
+    private List<String> generateNextCursor(SyncJobDto syncJobDto, String sortField){
+
+        List<String> encodedSyncJobCursors = new ArrayList<>();
+
+        try {
+            ResponseSyncJobCursorDto cursorDto = switch (sortField) {
+                case "targetDate" ->
+                    new ResponseSyncJobCursorDto(
+                        syncJobDto.id(),
+                        syncJobDto.targetDate(),
+                        null
+                    );
+
+                case "jobTime" ->
+                    new ResponseSyncJobCursorDto(
+                        syncJobDto.id(),
+                        null,
+                        syncJobDto.jobTime()
+                    );
+
+                default -> {
+                    log.warn("알 수 없는 정렬 필드: {}", sortField);
+                    yield new ResponseSyncJobCursorDto(
+                        syncJobDto.id(),
+                        null,
+                        syncJobDto.jobTime() != null ? syncJobDto.jobTime() : null
+                    );
+                }
+            };
+
+            String jsonCursor  = objectMapper.writeValueAsString(cursorDto);
+            String jsonIdAfter  = objectMapper.writeValueAsString(cursorDto.id());
+
+            String encodedCursor = Base64.getEncoder().encodeToString(jsonCursor.getBytes());
+            String encodedCursorIdAfter = Base64.getEncoder().encodeToString(jsonIdAfter.getBytes());
+
+            encodedSyncJobCursors.add(encodedCursor);
+            encodedSyncJobCursors.add(encodedCursorIdAfter);
+
+            return encodedSyncJobCursors;
+
+        } catch (Exception e) {
+            log.error("커서 생성 실패: sortField={}, syncJobDto={}", sortField, syncJobDto, e);
+            throw new RuntimeException("커서 생성에 실패했습니다.", e);
+        }
+    }
+
+    private ResponseSyncJobCursorDto parseCurser(String cursor){
+        try{
+            byte[] decodedBytes = Base64.getDecoder().decode(cursor);
+            String dateString = new String(decodedBytes);
+
+            return objectMapper.readValue(dateString, ResponseSyncJobCursorDto.class);
+        }
+        catch (Exception e){
+            log.error("SyncJobService: 입력커서: {} 디코딩 실패 ", cursor);
+            throw new IllegalArgumentException(e);
+        }
+    }
 
 }

@@ -18,7 +18,7 @@ import com.sprint.findex.entity.Period;
 import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
-import com.sprint.findex.repository.IndexDataSpecifications;
+import com.sprint.findex.specification.IndexDataSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
 import java.math.BigDecimal;
@@ -40,12 +40,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service

@@ -60,7 +60,6 @@ public interface IndexInfoApi {
         @Parameter(description = "지수 정보 ID", required = true) Long id
     );
 
-    // 아이디로 지수 정보 조회
     @Operation(summary = "지수 정보 조회", description =  "ID로 지수 정보를 조회합니다.")
     @ApiResponses(
         value = {
@@ -76,7 +75,6 @@ public interface IndexInfoApi {
         @Parameter(description = "지수 정보 ID", required = true) Long id
     );
 
-    // 지수 정보 목록 조회 (정렬, 필터링, 페이지네이션)
     @Operation(
         summary = "지수 정보 목록 조회",
         description = "지수 정보 목록을 조회합니다. 필터링, 정렬, 커서 기반 페이지네이션을 지원합니다.")
@@ -93,15 +91,13 @@ public interface IndexInfoApi {
         @Parameter(description = "지수 분류명", required = false) String indexClassification,
         @Parameter(description = "지수명", required = false) String indexName,
         @Parameter(description = "즐겨찾기 여부", required = false) Boolean favorite,
-        @Parameter(description = "이전 페이지 마지막 요소 ID", required = false) Long idAfter,
+        @Parameter(description = "이전 페이지 마지막 요소 ID", required = false) String idAfter,
         @Parameter(description = "커서 (다음 페이지 시작점)", required = false) String cursor,
         @Parameter(description = "정렬 필드 (indexClassification, indexName, employedItemsCount)", required = false) String sortField,
         @Parameter(description = "정렬 방향 (asc, desc)", required = false) String sortDirection,
         @Parameter(description = "페이지 크기", required = false) int size
     );
 
-
-    // 지수 정보 요약 목록 조회
     @Operation(
         summary = "지수 정보 요약 목록 조회",
         description = "지수 ID, 분류, 이름만 포함한 전체 지수 목록을 조회합니다.")

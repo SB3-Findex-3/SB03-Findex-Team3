@@ -1,13 +1,14 @@
-package com.sprint.findex.repository;
+package com.sprint.findex.specification;
 
 import com.sprint.findex.dto.IndexInfoSearchDto;
 import com.sprint.findex.entity.IndexInfo;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.data.jpa.domain.Specification;
 
 public class IndexInfoSpecifications {
 

@@ -6,14 +6,13 @@ import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
-import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.mapper.IndexInfoMapper;
 import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
-import com.sprint.findex.repository.IndexInfoSpecifications;
 import com.sprint.findex.service.AutoSyncConfigService;
 import com.sprint.findex.service.IndexInfoService;
+import com.sprint.findex.specification.IndexInfoSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -42,10 +41,6 @@ public class BasicIndexInfoService implements IndexInfoService {
     public IndexInfoDto createIndexInfo(IndexInfoCreateCommand command) {
         IndexInfo indexInfo = IndexInfo.create(command);
         indexInfoRepository.save(indexInfo);
-
-        // AutoSyncConfig도 같이 생성
-        AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(indexInfo);
-        autoSyncConfigRepository.save(config);
 
         return indexInfoMapper.toDto(indexInfo);
     }

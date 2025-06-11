@@ -2,12 +2,12 @@ package com.sprint.findex.entity;
 
 import com.sprint.findex.entity.base.BaseEntity;
 import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "sync_job")
@@ -23,7 +23,7 @@ public class SyncJob extends BaseEntity {
     @Column(name = "job_type", nullable = false, length = 20)
     private SyncJobType jobType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "index_info_id")
     private IndexInfo indexInfo;
 

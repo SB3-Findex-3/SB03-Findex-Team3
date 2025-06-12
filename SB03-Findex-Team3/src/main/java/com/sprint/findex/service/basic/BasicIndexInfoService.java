@@ -2,22 +2,20 @@ package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import com.sprint.findex.dto.response.ResponseCursorDto;
+import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.mapper.IndexInfoMapper;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexInfoService;
 import com.sprint.findex.specification.IndexInfoSpecifications;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +26,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -36,12 +39,17 @@ public class BasicIndexInfoService implements IndexInfoService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexInfoMapper indexInfoMapper;
     private final ObjectMapper objectMapper;
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
 
 
     @Override
     public IndexInfoDto createIndexInfo(IndexInfoCreateCommand command) {
         IndexInfo indexInfo = IndexInfo.create(command);
         IndexInfo savedIndexInfo = indexInfoRepository.save(indexInfo);
+
+        AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(savedIndexInfo);
+        autoSyncConfigRepository.save(config);
+
         return indexInfoMapper.toDto(savedIndexInfo);
     }
 

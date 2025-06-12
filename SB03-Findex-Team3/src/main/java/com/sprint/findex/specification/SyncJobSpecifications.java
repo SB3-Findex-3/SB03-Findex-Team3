@@ -1,18 +1,19 @@
 package com.sprint.findex.specification;
 
-import com.sprint.findex.dto.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
+import com.sprint.findex.dto.response.ResponseSyncJobCursorDto;
 import com.sprint.findex.entity.SyncJob;
 import com.sprint.findex.entity.SyncJobType;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.domain.Specification;
 
 @Slf4j
 public class SyncJobSpecifications {

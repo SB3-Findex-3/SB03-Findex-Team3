@@ -1,6 +1,6 @@
 package com.sprint.findex.mapper;
 
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

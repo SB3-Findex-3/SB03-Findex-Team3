@@ -4,7 +4,7 @@ import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.entity.IndexInfo;
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import java.util.List;

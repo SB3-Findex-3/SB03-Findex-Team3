@@ -1,7 +1,7 @@
 package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.ResponseSyncJobCursorDto;
+import com.sprint.findex.dto.response.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
 import com.sprint.findex.dto.response.CursorPageResponseSyncJobDto;
@@ -10,6 +10,7 @@ import com.sprint.findex.entity.*;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.global.dto.MarketIndexResponse;
 import com.sprint.findex.mapper.SyncJobMapper;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
@@ -52,6 +53,7 @@ public class BasicSyncJobService implements SyncJobService {
     private final SyncJobRepository syncJobRepository;
     private final SyncJobMapper syncJobMapper;
     private final ObjectMapper objectMapper;
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
 
     @Value("${api.data.service-key}")
     private String serviceKey;
@@ -284,7 +286,7 @@ public class BasicSyncJobService implements SyncJobService {
                 IndexInfo indexInfo;
 
                 if (existing != null) {
-                    indexInfo = updateExisting(existing, item);
+                    updateExisting(existing, item);
 
                     if (hasChanged(existing, item)) {
                         indexInfo = updateExisting(existing, item);
@@ -297,7 +299,7 @@ public class BasicSyncJobService implements SyncJobService {
                 } else {
                     indexInfo = createNewIndexInfo(item);
                     allIndexInfo.add(indexInfo);
-                    IndexInfo savedInfo = indexInfoRepository.save(indexInfo);
+                    indexInfoRepository.save(indexInfo);
                 }
 
                 SyncJob newSyncJob = createSyncJob(indexInfo, workerIp);
@@ -322,17 +324,25 @@ public class BasicSyncJobService implements SyncJobService {
             .orElse(null);
     }
 
+    //info 저장 시 autosync도 저장
     private IndexInfo createNewIndexInfo(ApiResponse.StockIndexItem item) {
-
-        return new IndexInfo(
-            item.getIndexClassification(),
-            item.getIndexName(),
-            parseInteger(item.getEmployedItemsCount()),
-            parseDate(item.getBasePointTime()),
-            parseBigDecimal(item.getBaseIndex()),
-            SourceType.OPEN_API,
-            false
+        IndexInfo newIndexInfo = new IndexInfo(
+                item.getIndexClassification(),
+                item.getIndexName(),
+                parseInteger(item.getEmployedItemsCount()),
+                parseDate(item.getBasePointTime()),
+                parseBigDecimal(item.getBaseIndex()),
+                SourceType.OPEN_API,
+                false
         );
+
+        indexInfoRepository.save(newIndexInfo);
+
+        AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(newIndexInfo);
+        config.setEnabled(false);
+        autoSyncConfigRepository.save(config);
+
+        return newIndexInfo;
     }
 
     private SyncJob createSyncJob(IndexInfo indexInfo, String workerIp){
@@ -556,5 +566,4 @@ public class BasicSyncJobService implements SyncJobService {
             throw new IllegalArgumentException(e);
         }
     }
-
 }

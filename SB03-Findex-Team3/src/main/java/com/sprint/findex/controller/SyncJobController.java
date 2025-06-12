@@ -11,20 +11,16 @@ import com.sprint.findex.mapper.SyncJobQueryParamsMapper;
 import com.sprint.findex.service.SyncJobService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -35,7 +31,7 @@ public class SyncJobController {
     private final SyncJobService syncJobService;
     private final SyncJobQueryParamsMapper syncJobQueryParamsMapper;
 
-    @PostMapping("index-infos")
+    @PostMapping("/index-infos")
     public ResponseEntity<List<SyncJobDto>> syncIndexInfoAsync(HttpServletRequest httpRequest) {
         String clientIp = IpUtil.getClientIp(httpRequest);
         Mono<List<SyncJobDto>> result = syncJobService.fetchAllIndexInfo(clientIp);
@@ -46,8 +42,8 @@ public class SyncJobController {
 
     }
 
-    @PostMapping("index-data")
-    public ResponseEntity<List<SyncJobDto>> syncIndexInfo(
+    @PostMapping("/index-data")
+    public ResponseEntity<List<SyncJobDto>> syncIndexData(
         @Valid @RequestBody IndexDataSyncRequest request, HttpServletRequest httpRequest) {
 
         String workerIp = IpUtil.getClientIp(httpRequest);

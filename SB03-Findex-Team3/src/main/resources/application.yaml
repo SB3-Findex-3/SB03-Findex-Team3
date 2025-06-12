@@ -21,7 +21,7 @@ spring:
 
 api:
   data:
-    service-key: "H8VBVtPqAX70uoXhe4lgVybO8aqvgbVNMP09lt3dSBz61nMlcPwDIKIQjgtCFxqnFn0pYgqEce7kOZk4UlVdhw=="
+    service-key: ${API_DATA_SERVICE_KEY}
     base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
 server:
   port: 8080
@@ -34,4 +34,4 @@ springdoc:
     path: /swagger-ui.html
 sync:
   scheduler:
-    cron: "*/15 * * * * *"
+    cron: "* * 2 * * *"

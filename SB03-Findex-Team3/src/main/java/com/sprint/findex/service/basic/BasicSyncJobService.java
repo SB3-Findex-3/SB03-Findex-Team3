@@ -1,18 +1,12 @@
 package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.response.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
-import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
+import com.sprint.findex.dto.response.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.response.SyncJobDto;
-import com.sprint.findex.entity.AutoSyncConfig;
-import com.sprint.findex.entity.IndexData;
-import com.sprint.findex.entity.IndexInfo;
-import com.sprint.findex.entity.SourceType;
-import com.sprint.findex.entity.SyncJob;
-import com.sprint.findex.entity.SyncJobResult;
-import com.sprint.findex.entity.SyncJobType;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
+import com.sprint.findex.entity.*;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.global.dto.MarketIndexResponse;
 import com.sprint.findex.global.exception.CommonException;
@@ -24,20 +18,6 @@ import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
 import com.sprint.findex.service.SyncJobService;
 import com.sprint.findex.specification.SyncJobSpecifications;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +33,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor

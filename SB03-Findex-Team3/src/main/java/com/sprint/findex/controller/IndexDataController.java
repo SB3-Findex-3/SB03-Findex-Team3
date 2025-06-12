@@ -11,9 +11,8 @@ import com.sprint.findex.dto.response.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.Period;
-import com.sprint.findex.repository.IndexDataRepository;
-import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
+import jakarta.validation.Valid;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -40,11 +39,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class IndexDataController implements IndexDataApi {
 
     private final IndexDataService indexDataService;
-    private final IndexInfoRepository indexInfoRepository;
-    private final IndexDataRepository indexDataRepository;
 
     @PostMapping
-    public ResponseEntity<IndexDataDto> create(@RequestBody IndexDataCreateRequest request) {
+    public ResponseEntity<IndexDataDto> create(@Valid @RequestBody IndexDataCreateRequest request) {
         IndexDataDto indexData = indexDataService.create(request);
 
         return ResponseEntity

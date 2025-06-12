@@ -33,11 +33,11 @@ public class AutoSyncConfigController implements AutoSyncConfigApi {
         return result;
     }
 
-    @PatchMapping("/{id}")
-    public AutoSyncConfigDto update(
-        @PathVariable Long id,
+    @PatchMapping("/{indexInfoId}")
+    public AutoSyncConfigDto updateEnabled(
+        @PathVariable Long indexInfoId,
         @Valid @RequestBody AutoSyncConfigUpdateRequest request
     ) {
-        return autoSyncConfigService.updateOrCreate(id, request);
+        return autoSyncConfigService.updateEnabled(indexInfoId, request.enabled());
     }
 }

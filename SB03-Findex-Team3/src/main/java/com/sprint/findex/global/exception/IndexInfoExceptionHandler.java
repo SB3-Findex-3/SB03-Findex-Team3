@@ -1,6 +1,5 @@
-package com.sprint.findex.domain.indexinfo.exception;
+package com.sprint.findex.global.exception;
 
-import com.sprint.findex.global.exception.ApiErrorResponse;
 import com.sprint.findex.global.exception.custom.IndexInfoNotFoundException;
 import com.sprint.findex.global.exception.custom.InvalidIndexInfoCommandException;
 import org.springframework.http.HttpStatus;

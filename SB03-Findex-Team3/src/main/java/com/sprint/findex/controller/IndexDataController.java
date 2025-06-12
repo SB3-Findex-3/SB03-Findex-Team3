@@ -65,6 +65,7 @@ public class IndexDataController implements IndexDataApi {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         indexDataService.delete(id);
+
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
             .build();
@@ -77,7 +78,10 @@ public class IndexDataController implements IndexDataApi {
 
         CursorPageResponseIndexData<IndexDataDto> result = indexDataService.findByCursor(params);
         log.debug("[IndexDataController] 조회 된 결과 수: {}", result.content().size());
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(result);
     }
 
 
@@ -118,8 +122,8 @@ public class IndexDataController implements IndexDataApi {
                 name.append(params.endDate());
             }
         }
-
         name.append(".csv");
+
         return name.toString();
     }
 
@@ -129,7 +133,9 @@ public class IndexDataController implements IndexDataApi {
         @RequestParam(value = "periodType", defaultValue = "DAILY") Period period) {
 
         IndexChartDto chartData = indexDataService.getIndexChart(indexInfoId, period);
-        return ResponseEntity.ok(chartData);
+
+        return ResponseEntity
+            .ok(chartData);
     }
 
     @Override
@@ -137,7 +143,9 @@ public class IndexDataController implements IndexDataApi {
     public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexPerformances(
         @RequestParam(value = "periodType", defaultValue = "DAILY") Period period ) {
         List<IndexPerformanceDto> result = indexDataService.getFavoriteIndexPerformances(period);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity
+            .ok(result);
     }
 
     @GetMapping("/performance/rank")
@@ -147,7 +155,9 @@ public class IndexDataController implements IndexDataApi {
         @RequestParam(defaultValue = "10") int limit
     ) {
         List<RankedIndexPerformanceDto> result = indexDataService.getIndexPerformanceRank(indexInfoId, period, limit);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity
+            .ok(result);
     }
 
 }

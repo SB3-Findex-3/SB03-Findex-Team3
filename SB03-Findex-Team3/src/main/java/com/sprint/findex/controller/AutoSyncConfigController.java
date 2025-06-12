@@ -23,6 +23,7 @@ public class AutoSyncConfigController {
         log.debug("[AutoSyncConfigController] 자동연동 커서 조회: {}", params);
         CursorPageResponseAutoSyncConfigDto result = autoSyncConfigService.findByCursor(params);
         log.debug("[AutoSyncConfigController] 자동연동 커서 조회 완료, 결과 수: {}", result.content().size());
+
         return result;
     }
 
@@ -31,6 +32,7 @@ public class AutoSyncConfigController {
         @PathVariable Long id,
         @Valid @RequestBody AutoSyncConfigUpdateRequest request
     ) {
-        return autoSyncConfigService.updateOrCreate(id, request);
+        return autoSyncConfigService
+            .updateOrCreate(id, request);
     }
 }

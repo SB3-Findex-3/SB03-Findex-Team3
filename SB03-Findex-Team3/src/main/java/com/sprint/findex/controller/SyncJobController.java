@@ -2,8 +2,8 @@ package com.sprint.findex.controller;
 
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
-import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
 import com.sprint.findex.dto.response.SyncJobDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
 import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;
 import com.sprint.findex.global.util.IpUtil;
@@ -80,6 +80,8 @@ public class SyncJobController {
         );
 
         CursorPageResponseSyncJobDto response = syncJobService.findSyncJobByCursor(syncParams);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(response);
     }
 }

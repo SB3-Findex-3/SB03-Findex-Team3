@@ -1,4 +1,4 @@
-package com.sprint.findex.repository;
+package com.sprint.findex.specification;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.findex.dto.request.IndexDataQueryParams;

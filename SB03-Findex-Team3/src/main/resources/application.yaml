@@ -21,26 +21,16 @@ spring:
 
 api:
   data:
-    service-key: "H8VBVtPqAX70uoXhe4lgVybO8aqvgbVNMP09lt3dSBz61nMlcPwDIKIQjgtCFxqnFn0pYgqEce7kOZk4UlVdhw=="
+    service-key: ${API_DATA_SERVICE_KEY}
     base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
 server:
   port: 8080
-
-api:
-  data:
-    service-key: G7FLC5vHWViaX082VqiLUzUzJG7XNg0TXUftb6tumyoJoORHBSVV9DqNrmpMnKfVVjjqztgA3NW%2BkX8Lb8PiCg%3D%3D
-    base-url: https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService
-
-
-logging:
-  level:
-    root:
-    org.springframework.web: info
-    com.sprint.findex: debug
-
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+sync:
+  scheduler:
+    cron: "*/15 * * * * *"

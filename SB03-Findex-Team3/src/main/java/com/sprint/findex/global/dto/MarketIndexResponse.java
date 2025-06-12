@@ -35,5 +35,7 @@ public class MarketIndexResponse {
         private Long trqu;
         private Long trPrc;
         private Long lstgMrktTotAmt;
+        private String idxCsf;
+        private String idxNm;
     }
 }

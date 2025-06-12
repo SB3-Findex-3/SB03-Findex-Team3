@@ -82,10 +82,12 @@ public class BasicSyncJobService implements SyncJobService {
             final String finalWorkerIp = workerIp;
             jobMonos.add(
                 fetchIndexInfo(indexInfoId)
-                    .flatMap(indexInfo -> fetchMarketIndexData(request, indexInfo)
-                        .flatMap(items -> processItems(items, indexInfo, request, finalWorkerIp))
+                    .flatMap(indexInfo ->
+                            fetchMarketIndexData(request, indexInfo)
+                                .flatMap(items -> processItems(items, request, indexInfo, finalWorkerIp))
                     )
-                    .onErrorResume(e -> handleError(e, request, indexInfoId, finalWorkerIp).map(List::of))
+                    .onErrorResume(
+                        e -> handleError(e, request, indexInfoId, finalWorkerIp).map(List::of))
             );
         }
 
@@ -121,24 +123,35 @@ public class BasicSyncJobService implements SyncJobService {
     }
 
     private String createMarketIndexUrl(IndexDataSyncRequest request, IndexInfo indexInfo) {
-        return String.format(
+        String encodedIndexName = URLEncoder.encode(indexInfo.getIndexName(), StandardCharsets.UTF_8);
+
+        String url = String.format(
             "%s/getStockMarketIndex?serviceKey=%s&resultType=json&pageNo=1&numOfRows=1000&beginBasDt=%s&endBasDt=%s&idxNm=%s",
             baseUrl,
             serviceKey,
             request.baseDateFrom().format(DATE_FORMATTER),
             request.baseDateTo().format(DATE_FORMATTER),
-            URLEncoder.encode(indexInfo.getIndexName(), StandardCharsets.UTF_8)
+            encodedIndexName
         );
+
+        return url;
     }
 
     private Mono<List<SyncJobDto>> processItems(
         List<MarketIndexResponse.MarketIndexData> items,
-        IndexInfo indexInfo,
         IndexDataSyncRequest request,
+        IndexInfo indexInfo,
         String workerIp
     ) {
         List<Mono<SyncJobDto>> jobMonos = new ArrayList<>();
+
         for (MarketIndexResponse.MarketIndexData item : items) {
+
+            if (!indexInfo.getIndexClassification().equals(item.getIdxCsf()) ||
+                !indexInfo.getIndexName().equals(item.getIdxNm())) {
+                continue;
+            }
+
             LocalDate baseDate = parseBaseDate(item.getBasDt());
             jobMonos.add(saveOrUpdateIndexData(indexInfo, baseDate, item, workerIp));
         }
@@ -158,30 +171,46 @@ public class BasicSyncJobService implements SyncJobService {
         String workerIp
     ) {
         return Mono.fromSupplier(() -> {
+
             IndexData existing = indexDataRepository
                 .findByIndexInfoAndBaseDate(indexInfo, baseDate)
                 .orElse(null);
 
             if (existing != null) {
-
                 existing.updateFromApi(item);
                 indexDataRepository.save(existing);
-                log.info("IndexData 업데이트됨: index={}, date={}", indexInfo.getIndexName(), baseDate);
+
+                log.info("IndexData 업데이트됨: classification={}, name={}, date={}",
+                    indexInfo.getIndexClassification(), indexInfo.getIndexName(), baseDate,
+                    item.getClpr(), item.getTrqu(), item.getTrPrc());
             } else {
                 IndexData newData = new IndexData(
                     indexInfo, baseDate, SourceType.OPEN_API,
                     item.getMkp(), item.getClpr(), item.getHipr(), item.getLopr(),
-                    item.getVs(), item.getFltRt(), item.getTrqu(), item.getTrPrc(), item.getLstgMrktTotAmt()
+                    item.getVs(), item.getFltRt(), item.getTrqu(), item.getTrPrc(),
+                    item.getLstgMrktTotAmt()
                 );
                 indexDataRepository.save(newData);
-                log.info("IndexData 새로 저장됨: index={}, date={}", indexInfo.getIndexName(), baseDate);
+
+                log.info("IndexData 새로 저장됨: classification={}, name={}, date={}",
+                    indexInfo.getIndexClassification(), indexInfo.getIndexName(), baseDate,
+                    item.getClpr(), item.getTrqu(), item.getTrPrc());
             }
 
-            SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, baseDate, workerIp, OffsetDateTime.now(), SyncJobResult.SUCCESS);
+            SyncJob job = new SyncJob(
+                SyncJobType.INDEX_DATA,
+                indexInfo,
+                baseDate,
+                workerIp,
+                OffsetDateTime.now(),
+                SyncJobResult.SUCCESS
+            );
             syncJobRepository.save(job);
+
             return toDto(job);
         });
     }
+
 
     private SyncJobDto toDto(SyncJob job) {
         return new SyncJobDto(

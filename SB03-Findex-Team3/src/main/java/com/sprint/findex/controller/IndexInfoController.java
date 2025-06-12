@@ -102,19 +102,25 @@ public class IndexInfoController implements IndexInfoApi {
     public ResponseEntity<IndexInfoDto> createIndexInfo(@Valid @RequestBody IndexInfoCreateRequest request) {
         IndexInfoCreateCommand command = IndexInfoCreateCommand.fromUser(request);
         IndexInfoDto indexInfoDto = indexInfoService.createIndexInfo(command);
-        return ResponseEntity.status(HttpStatus.CREATED).body(indexInfoDto);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(indexInfoDto);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<IndexInfoDto> updateIndexInfo(@PathVariable Long id,
         @Valid @RequestBody IndexInfoUpdateRequest request) {
         IndexInfoDto updatedIndex = indexInfoService.updateIndexInfo(id, request);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedIndex);
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(updatedIndex);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIndexInfo(@PathVariable Long id) {
         indexInfoService.deleteIndexInfo(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 }

@@ -19,5 +19,20 @@ spring:
         highlight_sql: true
         use_sql_comments: true
 
+api:
+  data:
+    service-key: ${API_DATA_SERVICE_KEY}
+    base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
+    
 server:
   port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+sync:
+  scheduler:
+    cron: "0 0 2 * * *"

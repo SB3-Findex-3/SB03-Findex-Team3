@@ -8,6 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,7 +34,7 @@ public class IndexInfo extends BaseEntity {
     private LocalDate basePointInTime;
 
     @Column(name = "base_index", nullable = false)
-    private int baseIndex;
+    private BigDecimal baseIndex;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "source_type", length = 10, nullable = false)
@@ -43,7 +44,7 @@ public class IndexInfo extends BaseEntity {
     private boolean favorite;
 
     public IndexInfo(String indexClassification, String indexName, int employedItemsCount,
-        LocalDate basePointInTime, int baseIndex, SourceType sourceType, boolean favorite) {
+        LocalDate basePointInTime, BigDecimal baseIndex, SourceType sourceType, boolean favorite) {
         this.indexClassification = indexClassification;
         this.indexName = indexName;
         this.employedItemsCount = employedItemsCount;
@@ -81,12 +82,8 @@ public class IndexInfo extends BaseEntity {
         this.basePointInTime = basePointInTime;
     }
 
-    public void  updateBaseIndex(int baseIndex) {
+    public void  updateBaseIndex(BigDecimal baseIndex) {
         this.baseIndex = baseIndex;
-    }
-
-    public void  updateSourceType(SourceType sourceType) {
-        this.sourceType = sourceType;
     }
 
     public void  updateFavorite(Boolean favorite) {

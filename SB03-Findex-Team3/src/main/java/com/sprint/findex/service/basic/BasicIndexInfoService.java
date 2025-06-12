@@ -2,14 +2,16 @@ package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
-import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import com.sprint.findex.dto.response.ResponseCursorDto;
 import com.sprint.findex.entity.IndexInfo;
+import com.sprint.findex.global.exception.CommonException;
+import com.sprint.findex.global.exception.Errors;
 import com.sprint.findex.mapper.IndexInfoMapper;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexInfoService;
@@ -17,7 +19,6 @@ import com.sprint.findex.specification.IndexInfoSpecifications;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -46,15 +47,10 @@ public class BasicIndexInfoService implements IndexInfoService {
     }
 
     @Override
-    public IndexInfo createIndexInfoFromApi(IndexInfoCreateCommand command) {
-        return null;
-    }
-
-    @Override
     @Transactional
     public IndexInfoDto updateIndexInfo(Long id, IndexInfoUpdateRequest updateDto){
         IndexInfo indexInfo = indexInfoRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("No index info found with id: " + id));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 
         if(updateDto.employedItemsCount() != null && !updateDto.employedItemsCount().equals(indexInfo.getEmployedItemsCount())){
             indexInfo.updateEmployedItemsCount(updateDto.employedItemsCount());
@@ -72,7 +68,6 @@ public class BasicIndexInfoService implements IndexInfoService {
             indexInfo.updateFavorite(updateDto.favorite());
         }
 
-
         return indexInfoMapper.toDto(indexInfo);
     }
 
@@ -87,8 +82,7 @@ public class BasicIndexInfoService implements IndexInfoService {
     public IndexInfoDto findById(Long id) {
 
         IndexInfo indexInfo = indexInfoRepository.findById(id)
-            .orElseThrow(
-                () -> new NoSuchElementException("IndexInfoService: 해당하는 지수 정보가 존재하지 않습니다."));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 
         return indexInfoMapper.toDto(indexInfo);
     }
@@ -96,28 +90,34 @@ public class BasicIndexInfoService implements IndexInfoService {
     @Override
     @Transactional(readOnly = true)
     public CursorPageResponseIndexInfoDto findIndexInfoByCursor(IndexInfoSearchDto searchDto) {
+        try {
+            ResponseCursorDto responseCursorDto = null;
+            if (searchDto.cursor() != null) {
+                responseCursorDto = parseCurser(searchDto.cursor());
+                log.info("[IndexInfoService] 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}", responseCursorDto);
+            }
+  
+            Specification<IndexInfo> spec = IndexInfoSpecifications.withFilters(responseCursorDto, searchDto);
 
-        ResponseCursorDto responseCursorDto = null;
-        if (searchDto.cursor() != null){
-            responseCursorDto = parseCurser(searchDto.cursor());
-            log.info("IndexInfoService: 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}", responseCursorDto);
-        }
+            Specification<IndexInfo> countSpec = IndexInfoSpecifications.withFilters(null,
+                searchDto);
 
-        Specification<IndexInfo> spec = IndexInfoSpecifications.withFilters(responseCursorDto, searchDto);
+            Sort sort = createSort(searchDto.sortField(), searchDto.sortDirection());
+            Pageable pageable = PageRequest.of(0, searchDto.size(), sort);
 
-        Specification<IndexInfo> countSpec = IndexInfoSpecifications.withFilters(null, searchDto);
+            Slice<IndexInfo> slice = indexInfoRepository.findAll(spec, pageable);
 
-        Sort sort = createSort(searchDto.sortField(), searchDto.sortDirection());
-        Pageable pageable = PageRequest.of(0, searchDto.size(), sort);
+            Long totalElements = indexInfoRepository.count(countSpec);
 
-        Slice<IndexInfo> slice = indexInfoRepository.findAll(spec, pageable);
-
-        Long totalElements = indexInfoRepository.count(countSpec);
-
-        log.info("IndexInfoService: 조회 완료 -> 결과 수: {}, 다음 페이지 존재: {}, 전체 개수: {}",
+        log.info("[IndexInfoService] 조회 완료 -> 결과 수: {}, 다음 페이지 존재: {}, 전체 개수: {}",
             slice.getNumberOfElements(), slice.hasNext(), totalElements);
 
-        return convertToResponse(slice, searchDto, totalElements);
+            return convertToResponse(slice, searchDto, totalElements);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new CommonException(Errors.INDEX_INFO_BAD_REQUEST, e);
+        } catch (Exception e) {
+            throw new CommonException(Errors.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     public List<IndexInfoSummaryDto> findIndexInfoSummary() {
@@ -166,7 +166,7 @@ public class BasicIndexInfoService implements IndexInfoService {
 
         Sort sort = Sort.by(direction, sortField).and(Sort.by("id").ascending());
 
-        log.debug("IndexInfoService: Sort 생성 -> {}", sort);
+        log.debug("[IndexInfoService] Sort 생성 -> {}", sort);
         return sort;
     }
 
@@ -180,12 +180,12 @@ public class BasicIndexInfoService implements IndexInfoService {
                 case "indexName" -> item.indexName();
                 case "employedItemsCount" -> String.valueOf(item.employedItemsCount());
                 default -> {
-                    log.warn("IndexInfoService: 정렬 필드를 알 수 없습니다. 기본값을 사용합니다");
+                    log.warn("[IndexInfoService] 알 수 없는 정렬 필드. 기본값을 사용합니다");
                     yield item.indexClassification();
                 }
             };
 
-            log.debug("IndexInfoService: 커서 생성 -> sortField: {}, cursorValue: {}", sortField, cursorValue);
+            log.debug("[IndexInfoService] 커서 생성 -> sortField: {}, cursorValue: {}", sortField, cursorValue);
 
             ResponseCursorDto responseCursorDto = new ResponseCursorDto(
                 item.id(),
@@ -205,7 +205,7 @@ public class BasicIndexInfoService implements IndexInfoService {
             return encodedPageData;
 
         }catch (JsonProcessingException e) {
-            log.error("IndexInfoService: 커서 생성 실패, item: {} sortField: {}", item, sortField);
+            log.error("[IndexInfoService] 커서 생성 실패, item: {} sortField: {}", item, sortField);
             throw new RuntimeException(e);
         }
     }
@@ -216,14 +216,10 @@ public class BasicIndexInfoService implements IndexInfoService {
             byte[] decodedBytes = Base64.getDecoder().decode(cursor);
             String jsonString = new String(decodedBytes);
 
-            log.info("IndexInfoService: 커서 파싱 됨");
-            log.info("IndexInfoService: 인코딩 된 커서: {}", cursor);
-            log.info("IndexInfoService: 디코딩 된 JSON: {}", jsonString);
-
             return objectMapper.readValue(jsonString, ResponseCursorDto.class);
         }
         catch (JsonProcessingException e){
-            log.error("IndexInfoService: 입력커서: {} 파싱 실패 ", cursor);
+            log.error("[IndexInfoService] 입력커서: {} 파싱 실패 ", cursor);
             throw new RuntimeException(e);
         }
     }

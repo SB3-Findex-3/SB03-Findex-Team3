@@ -1,4 +1,4 @@
-package com.sprint.findex.dto.response;
+package com.sprint.findex.dto.response.cursor;
 
 import java.util.List;
 

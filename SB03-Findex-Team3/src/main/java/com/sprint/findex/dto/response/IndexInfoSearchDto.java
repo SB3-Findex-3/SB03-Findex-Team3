@@ -1,4 +1,4 @@
-package com.sprint.findex.dto;
+package com.sprint.findex.dto.response;
 
 public record IndexInfoSearchDto(
     String indexClassification,

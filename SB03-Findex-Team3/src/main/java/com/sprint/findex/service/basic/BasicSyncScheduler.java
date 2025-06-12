@@ -24,7 +24,7 @@ public class BasicSyncScheduler {
 
     @Scheduled(cron = "${sync.scheduler.cron}")
     public void autoSyncIndexData() {
-        log.info("지수 데이터 배치 자동연동 시작");
+        log.info("[SyncSchedule] 지수 데이터 배치 자동연동 시작");
 
         List<AutoSyncConfig> enabledConfigs = autoSyncConfigRepository.findAll().stream()
             .filter(AutoSyncConfig::isEnabled)
@@ -37,7 +37,7 @@ public class BasicSyncScheduler {
                 .orElse(OffsetDateTime.now().minusDays(28));
             LocalDate lastSyncedDate = lastJobTime.toLocalDate();
 
-            log.info("[indexId={}] 마지막 연동 날짜: {}", indexId, lastSyncedDate);
+            log.info("[SyncSchedule] [indexId={}] 마지막 연동 날짜: {}", indexId, lastSyncedDate);
             LocalDate today = LocalDate.now();
             if (lastSyncedDate.isBefore(today)) {
                 IndexDataSyncRequest request = new IndexDataSyncRequest(
@@ -47,6 +47,6 @@ public class BasicSyncScheduler {
             }
         }
 
-        log.info("배치 지수 데이터 자동연동 완료");
+        log.info("[SyncSchedule] 배치 지수 데이터 자동연동 완료");
     }
 }

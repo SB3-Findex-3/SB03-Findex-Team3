@@ -3,13 +3,11 @@ package com.sprint.findex.entity;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.entity.base.BaseEntity;
+import com.sprint.findex.global.dto.MarketIndexResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -30,11 +28,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IndexData extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "index_info_id", nullable = false)
@@ -128,5 +121,16 @@ public class IndexData extends BaseEntity {
             .equals(this.marketTotalAmount)) {
             this.marketTotalAmount = request.marketTotalAmount();
         }
+    }
+    public void updateFromApi(MarketIndexResponse.MarketIndexData item) {
+        this.marketPrice = item.getMkp();
+        this.closingPrice = item.getClpr();
+        this.highPrice = item.getHipr();
+        this.lowPrice = item.getLopr();
+        this.versus = item.getVs();
+        this.fluctuationRate = item.getFltRt();
+        this.tradingQuantity = item.getTrqu();
+        this.tradingPrice = item.getTrPrc();
+        this.marketTotalAmount = item.getLstgMrktTotAmt();
     }
 }

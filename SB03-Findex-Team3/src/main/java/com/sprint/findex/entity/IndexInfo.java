@@ -86,10 +86,6 @@ public class IndexInfo extends BaseEntity {
         this.baseIndex = baseIndex;
     }
 
-    public void  updateSourceType(SourceType sourceType) {
-        this.sourceType = sourceType;
-    }
-
     public void  updateFavorite(Boolean favorite) {
         this.favorite = favorite;
     }

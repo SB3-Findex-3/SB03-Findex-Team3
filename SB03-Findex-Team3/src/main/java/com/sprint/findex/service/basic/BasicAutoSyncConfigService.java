@@ -4,24 +4,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.findex.dto.request.AutoSyncConfigUpdateRequest;
 import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
-import com.sprint.findex.dto.response.CursorPageResponseAutoSyncConfigDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseAutoSyncConfigDto;
 import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
+import com.sprint.findex.global.exception.CommonException;
+import com.sprint.findex.global.exception.Errors;
 import com.sprint.findex.mapper.AutoSyncConfigMapper;
 import com.sprint.findex.repository.AutoSyncConfigRepository;
-import com.sprint.findex.specification.AutoSyncConfigSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.AutoSyncConfigService;
-import jakarta.persistence.EntityNotFoundException;
+import com.sprint.findex.specification.AutoSyncConfigSpecifications;
 import jakarta.transaction.Transactional;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -38,17 +44,16 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
     private static final String DEFAULT_SORT_DIRECTION = "asc";
 
     @Override
-    public AutoSyncConfigDto updateOrCreate(Long id, AutoSyncConfigUpdateRequest request) {
-        boolean enabled = request.enabled();
-
-        return autoSyncConfigRepository.findById(id)
+    public AutoSyncConfigDto updateEnabled(Long indexInfoId, boolean enabled) {
+        return autoSyncConfigRepository.findById(indexInfoId)
             .map(config -> {
                 config.setEnabled(enabled);
                 return autoSyncConfigMapper.toDto(autoSyncConfigRepository.save(config));
             })
             .orElseGet(() -> {
+
                 IndexInfo indexInfo = indexInfoRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("IndexInfo with id " + id + " not found"));
+                    .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 
                 AutoSyncConfig newConfig = AutoSyncConfig.ofIndexInfo(indexInfo);
                 newConfig.setEnabled(enabled);
@@ -123,8 +128,7 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             String json = mapper.writeValueAsString(data);
             return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            log.error("Failed to encode cursor", e);
-            return null;
+            throw new CommonException(Errors.INVALID_CURSOR, e);
         }
     }
 }

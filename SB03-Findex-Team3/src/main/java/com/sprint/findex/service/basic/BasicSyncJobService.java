@@ -349,11 +349,6 @@ public class BasicSyncJobService implements SyncJobService {
                 SyncJobDto syncJobDto = syncJobMapper.toDto(savedSyncJob);
                 syncJobs.add(syncJobDto);
 
-
-                AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(indexInfo);
-                config.setEnabled(false);
-                autoSyncConfigRepository.save(config);
-
             }catch (Exception e){
                 log.error("[SyncJobService] 불러온 지수 정보 처리 실패", e);
 

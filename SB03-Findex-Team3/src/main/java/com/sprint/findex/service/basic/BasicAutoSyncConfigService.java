@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.findex.dto.request.AutoSyncConfigUpdateRequest;
 import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
-import com.sprint.findex.dto.response.CursorPageResponseAutoSyncConfigDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseAutoSyncConfigDto;
 import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.mapper.AutoSyncConfigMapper;
@@ -48,7 +48,7 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             })
             .orElseGet(() -> {
                 IndexInfo indexInfo = indexInfoRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("IndexInfo with id " + id + " not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("[AutoSyncConfigService] 해당 아이디 " + id + "를 가진 지수 정보 찾을 수 없음"));
 
                 AutoSyncConfig newConfig = AutoSyncConfig.ofIndexInfo(indexInfo);
                 newConfig.setEnabled(enabled);
@@ -123,7 +123,7 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             String json = mapper.writeValueAsString(data);
             return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            log.error("Failed to encode cursor", e);
+            log.error("[AutoSyncConfigService] 커서 인코딩 실패: ", e);
             return null;
         }
     }

@@ -16,7 +16,6 @@ public class GlobalExceptionHandler {
             .body(ErrorResponse.of(error));
     }
 
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
         Errors error = Errors.UNKNOWN_ERROR;

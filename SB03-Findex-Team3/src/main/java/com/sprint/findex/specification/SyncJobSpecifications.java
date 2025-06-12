@@ -1,6 +1,6 @@
 package com.sprint.findex.specification;
 
-import com.sprint.findex.dto.ResponseSyncJobCursorDto;
+import com.sprint.findex.dto.response.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
 import com.sprint.findex.entity.SyncJob;
 import com.sprint.findex.entity.SyncJobType;

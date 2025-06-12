@@ -9,8 +9,8 @@ import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
-import com.sprint.findex.dto.response.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexData;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.Period;
@@ -93,7 +93,6 @@ public class BasicIndexDataService implements IndexDataService {
         indexDataRepository.delete(indexData);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public List<IndexDataDto> findAllByConditions(IndexDataQueryParams params) {
@@ -112,7 +111,7 @@ public class BasicIndexDataService implements IndexDataService {
         int pageSize =
             params.size() != null && params.size() > 0 ? params.size() : DEFAULT_PAGE_SIZE;
 
-        Pageable pageable = resolvePageable(params); // 페이징과 정렬 한 번에 처리
+        Pageable pageable = resolvePageable(params);
         var spec = IndexDataSpecifications.withFilters(params);
 
         Page<IndexData> pageResult = indexDataRepository.findAll(spec, pageable);
@@ -173,7 +172,7 @@ public class BasicIndexDataService implements IndexDataService {
                     .encodeToString(jsonCursor.getBytes(StandardCharsets.UTF_8));
             }
         } catch (JsonProcessingException e) {
-            log.error("Cursor 인코딩 실패", e);
+            log.error("[IndexDataService] Cursor 인코딩 실패", e);
         }
         return null;
     }
@@ -229,7 +228,7 @@ public class BasicIndexDataService implements IndexDataService {
 
         return favorites.stream()
             .map(indexInfo -> {
-                log.info("[BasicIndexDataService] method getFavoriteIndexPerformances, favorite: {} ",
+                log.info("[IndexDataService] getFavoriteIndexPerformances 메서드 진입, favorite: {} ",
                     indexInfo.getIndexName());
                 IndexData current = indexDataRepository.findTopByIndexInfoIdOrderByBaseDateDesc(
                     indexInfo.getId()).orElse(null);

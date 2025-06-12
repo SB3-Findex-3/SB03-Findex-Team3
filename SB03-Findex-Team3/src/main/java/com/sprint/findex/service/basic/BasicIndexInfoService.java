@@ -2,10 +2,10 @@ package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
-import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import com.sprint.findex.dto.response.ResponseCursorDto;
@@ -68,7 +68,6 @@ public class BasicIndexInfoService implements IndexInfoService {
             indexInfo.updateFavorite(updateDto.favorite());
         }
 
-
         return indexInfoMapper.toDto(indexInfo);
     }
 
@@ -95,12 +94,10 @@ public class BasicIndexInfoService implements IndexInfoService {
             ResponseCursorDto responseCursorDto = null;
             if (searchDto.cursor() != null) {
                 responseCursorDto = parseCurser(searchDto.cursor());
-                log.info("IndexInfoService: 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}",
-                    responseCursorDto);
+                log.info("[IndexInfoService] 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}", responseCursorDto);
             }
-
-            Specification<IndexInfo> spec = IndexInfoSpecifications.withFilters(responseCursorDto,
-                searchDto);
+  
+            Specification<IndexInfo> spec = IndexInfoSpecifications.withFilters(responseCursorDto, searchDto);
 
             Specification<IndexInfo> countSpec = IndexInfoSpecifications.withFilters(null,
                 searchDto);
@@ -112,8 +109,8 @@ public class BasicIndexInfoService implements IndexInfoService {
 
             Long totalElements = indexInfoRepository.count(countSpec);
 
-            log.info("IndexInfoService: 조회 완료 -> 결과 수: {}, 다음 페이지 존재: {}, 전체 개수: {}",
-                slice.getNumberOfElements(), slice.hasNext(), totalElements);
+        log.info("[IndexInfoService] 조회 완료 -> 결과 수: {}, 다음 페이지 존재: {}, 전체 개수: {}",
+            slice.getNumberOfElements(), slice.hasNext(), totalElements);
 
             return convertToResponse(slice, searchDto, totalElements);
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -169,7 +166,7 @@ public class BasicIndexInfoService implements IndexInfoService {
 
         Sort sort = Sort.by(direction, sortField).and(Sort.by("id").ascending());
 
-        log.debug("IndexInfoService: Sort 생성 -> {}", sort);
+        log.debug("[IndexInfoService] Sort 생성 -> {}", sort);
         return sort;
     }
 
@@ -183,12 +180,12 @@ public class BasicIndexInfoService implements IndexInfoService {
                 case "indexName" -> item.indexName();
                 case "employedItemsCount" -> String.valueOf(item.employedItemsCount());
                 default -> {
-                    log.warn("IndexInfoService: 정렬 필드를 알 수 없습니다. 기본값을 사용합니다");
+                    log.warn("[IndexInfoService] 알 수 없는 정렬 필드. 기본값을 사용합니다");
                     yield item.indexClassification();
                 }
             };
 
-            log.debug("IndexInfoService: 커서 생성 -> sortField: {}, cursorValue: {}", sortField, cursorValue);
+            log.debug("[IndexInfoService] 커서 생성 -> sortField: {}, cursorValue: {}", sortField, cursorValue);
 
             ResponseCursorDto responseCursorDto = new ResponseCursorDto(
                 item.id(),
@@ -208,7 +205,7 @@ public class BasicIndexInfoService implements IndexInfoService {
             return encodedPageData;
 
         }catch (JsonProcessingException e) {
-            log.error("IndexInfoService: 커서 생성 실패, item: {} sortField: {}", item, sortField);
+            log.error("[IndexInfoService] 커서 생성 실패, item: {} sortField: {}", item, sortField);
             throw new RuntimeException(e);
         }
     }
@@ -219,14 +216,10 @@ public class BasicIndexInfoService implements IndexInfoService {
             byte[] decodedBytes = Base64.getDecoder().decode(cursor);
             String jsonString = new String(decodedBytes);
 
-            log.info("IndexInfoService: 커서 파싱 됨");
-            log.info("IndexInfoService: 인코딩 된 커서: {}", cursor);
-            log.info("IndexInfoService: 디코딩 된 JSON: {}", jsonString);
-
             return objectMapper.readValue(jsonString, ResponseCursorDto.class);
         }
         catch (JsonProcessingException e){
-            log.error("IndexInfoService: 입력커서: {} 파싱 실패 ", cursor);
+            log.error("[IndexInfoService] 입력커서: {} 파싱 실패 ", cursor);
             throw new RuntimeException(e);
         }
     }

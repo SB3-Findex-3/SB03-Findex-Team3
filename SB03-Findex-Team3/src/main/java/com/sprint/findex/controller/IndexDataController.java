@@ -7,7 +7,7 @@ import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
-import com.sprint.findex.dto.response.CursorPageResponseIndexData;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.Period;
@@ -62,6 +62,7 @@ public class IndexDataController implements IndexDataApi {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         indexDataService.delete(id);
+
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
             .build();
@@ -69,18 +70,21 @@ public class IndexDataController implements IndexDataApi {
 
     @GetMapping
     public ResponseEntity<CursorPageResponseIndexData<IndexDataDto>> findByCursor(@ModelAttribute IndexDataQueryParams params) {
-        log.debug("📌 [커서 조회] sortField={}, cursor={}, idAfter={}, direction={}",
+        log.debug("[IndexDataController] 커서 조회 결과: sortField={}, cursor={}, idAfter={}, direction={}",
             params.sortField(), params.cursor(), params.idAfter(), params.sortDirection());
 
         CursorPageResponseIndexData<IndexDataDto> result = indexDataService.findByCursor(params);
-        log.debug("✅ 커서 조회 완료] 결과 수: {}", result.content().size());
-        return ResponseEntity.ok(result);
+        log.debug("[IndexDataController] 조회 된 결과 수: {}", result.content().size());
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(result);
     }
 
 
     @GetMapping("/export/csv")
     public ResponseEntity<byte[]> exportCsv(@ModelAttribute IndexDataQueryParams params) {
-        log.debug("🟡 [CSV Export 요청] {}", params);
+        log.debug("[IndexDataController] CSV Export 요청: {}", params);
 
         List<IndexDataDto> data = indexDataService.findAllByConditions(params);
         String csv = IndexDataCsvExporter.toCsv(data);
@@ -115,8 +119,8 @@ public class IndexDataController implements IndexDataApi {
                 name.append(params.endDate());
             }
         }
-
         name.append(".csv");
+
         return name.toString();
     }
 
@@ -126,14 +130,18 @@ public class IndexDataController implements IndexDataApi {
         @RequestParam(value = "periodType", defaultValue = "DAILY") Period period) {
 
         IndexChartDto chartData = indexDataService.getIndexChart(indexInfoId, period);
-        return ResponseEntity.ok(chartData);
+
+        return ResponseEntity
+            .ok(chartData);
     }
 
     @GetMapping("/performance/favorite")
     public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexPerformances(
         @RequestParam(value = "periodType", defaultValue = "DAILY") Period period ) {
         List<IndexPerformanceDto> result = indexDataService.getFavoriteIndexPerformances(period);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity
+            .ok(result);
     }
 
     @GetMapping("/performance/rank")
@@ -143,7 +151,9 @@ public class IndexDataController implements IndexDataApi {
         @RequestParam(defaultValue = "10") int limit
     ) {
         List<RankedIndexPerformanceDto> result = indexDataService.getIndexPerformanceRank(indexInfoId, period, limit);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity
+            .ok(result);
     }
 
 }

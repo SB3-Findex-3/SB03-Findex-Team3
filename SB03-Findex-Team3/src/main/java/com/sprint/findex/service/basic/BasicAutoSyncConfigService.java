@@ -44,15 +44,14 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
     private static final String DEFAULT_SORT_DIRECTION = "asc";
 
     @Override
-    public AutoSyncConfigDto updateOrCreate(Long id, AutoSyncConfigUpdateRequest request) {
-        boolean enabled = request.enabled();
-
-        return autoSyncConfigRepository.findById(id)
+    public AutoSyncConfigDto updateEnabled(Long indexInfoId, boolean enabled) {
+        return autoSyncConfigRepository.findById(indexInfoId)
             .map(config -> {
                 config.setEnabled(enabled);
                 return autoSyncConfigMapper.toDto(autoSyncConfigRepository.save(config));
             })
             .orElseGet(() -> {
+
                 IndexInfo indexInfo = indexInfoRepository.findById(id)
                     .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 

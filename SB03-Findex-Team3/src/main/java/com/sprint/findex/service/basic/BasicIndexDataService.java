@@ -10,7 +10,6 @@ import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
-import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
@@ -95,28 +94,6 @@ public class BasicIndexDataService implements IndexDataService {
     }
 
 
-    @Transactional
-    @Override
-    public String exportToCsv(IndexDataQueryParams params) {
-
-        String sortField = params.sortField() != null ? params.sortField() : "baseDate";
-        Sort.Direction direction =
-            "asc".equalsIgnoreCase(params.sortDirection()) ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-
-        Sort sort = Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
-
-        var spec = IndexDataSpecifications.withFilters(params);
-
-        List<IndexData> rawResults = indexDataRepository.findAll(spec, sort);
-
-        List<IndexDataDto> content = rawResults.stream()
-            .map(IndexDataMapper::toDto)
-            .collect(Collectors.toList());
-
-        return IndexDataCsvExporter.toCsv(content);
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<IndexDataDto> findAllByConditions(IndexDataQueryParams params) {
@@ -196,7 +173,7 @@ public class BasicIndexDataService implements IndexDataService {
                     .encodeToString(jsonCursor.getBytes(StandardCharsets.UTF_8));
             }
         } catch (JsonProcessingException e) {
-            log.error("❌ Cursor 인코딩 실패", e);
+            log.error("Cursor 인코딩 실패", e);
         }
         return null;
     }
@@ -317,14 +294,14 @@ public class BasicIndexDataService implements IndexDataService {
             win.addLast(v);
             sum = sum.add(v);
 
-            if (win.size() > window)             // 윈도 초과 시 맨 앞 제거
+            if (win.size() > window)
             {
                 sum = sum.subtract(win.removeFirst());
             }
 
             BigDecimal avg = (win.size() == window)
                 ? sum.divide(BigDecimal.valueOf(window), 2, RoundingMode.HALF_UP)
-                : null;                      // 아직 데이터 부족
+                : null;
 
             result.add(new ChartPoint(p.date(), avg));
         }

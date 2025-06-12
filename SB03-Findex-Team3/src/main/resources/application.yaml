@@ -3,9 +3,9 @@ spring:
     name: findex
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/findex
-    username: findex_user
-    password: 1234
+    url: postgresql://postgres:DsfOjIBMwbCMQnaLRTreKHdcIzsyHsBv@postgres-vrwl.railway.internal:5432/railway
+    username: postgres
+    password: DsfOjIBMwbCMQnaLRTreKHdcIzsyHsBv
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

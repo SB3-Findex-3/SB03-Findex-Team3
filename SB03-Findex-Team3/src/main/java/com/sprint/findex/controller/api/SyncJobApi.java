@@ -1,7 +1,7 @@
 package com.sprint.findex.controller.api;
 
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
-import com.sprint.findex.dto.response.CursorPageResponseSyncJobDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
 import com.sprint.findex.dto.response.SyncJobDto;
 import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;

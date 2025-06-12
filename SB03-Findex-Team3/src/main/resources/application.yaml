@@ -33,4 +33,4 @@ springdoc:
     path: /swagger-ui.html
 sync:
   scheduler:
-    cron: "*/15 * * * * *"
+    cron: "* * 2 * * *"

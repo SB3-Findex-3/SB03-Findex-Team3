@@ -32,7 +32,7 @@ public class BasicSyncJobHistoryService implements SyncJobHistoryService {
     @Override
     public void updateResult(Long id, SyncJobResult result) {
         SyncJobHistory history = syncJobHistoryRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("작업 이력을 찾을 수 없습니다: " + id));
+            .orElseThrow(() -> new RuntimeException("[SyncJobHistoryService] 작업 이력 찾을 수 없음: " + id));
 
         // 결과 업데이트 로직
         // SyncJobHistory 클래스가 불변 객체인 경우 새 인스턴스 생성 필요

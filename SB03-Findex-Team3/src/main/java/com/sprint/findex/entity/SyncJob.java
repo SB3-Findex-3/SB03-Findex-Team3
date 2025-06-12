@@ -29,7 +29,7 @@ public class SyncJob extends BaseEntity {
     @JoinColumn(name = "index_info_id")
     private IndexInfo indexInfo;
 
-    @Column(name = "target_date", nullable = false)
+    @Column(name = "target_date", nullable = true)
     private LocalDate targetDate;
 
     @Column(name = "worker", nullable = false, length = 15)

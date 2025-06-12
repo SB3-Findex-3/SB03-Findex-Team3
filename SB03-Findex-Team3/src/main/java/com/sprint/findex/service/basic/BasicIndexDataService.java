@@ -15,7 +15,7 @@ import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.Period;
 import com.sprint.findex.entity.SourceType;
-import com.sprint.findex.global.exception.InvalidSortFieldException;
+import com.sprint.findex.global.exception.custom.InvalidSortFieldException;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;

@@ -1,4 +1,4 @@
-package com.sprint.findex.global.exception;
+package com.sprint.findex.global.exception.custom;
 
 public class InvalidSortFieldException extends RuntimeException {
 

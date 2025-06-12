@@ -1,12 +1,11 @@
-package com.sprint.findex.dto.response;
+package com.sprint.findex.global.exception;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.ZonedDateTime;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.time.ZonedDateTime;
+
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter
@@ -53,22 +52,6 @@ public class ErrorResponse {
         this.status = status;
         this.message = message;
         this.details = null;
-    }
-
-    public void setTimestamp(ZonedDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
     }
 
     @Override

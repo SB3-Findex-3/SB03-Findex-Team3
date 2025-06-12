@@ -10,7 +10,6 @@ import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
-import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
@@ -18,33 +17,26 @@ import com.sprint.findex.entity.Period;
 import com.sprint.findex.entity.SourceType;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
-import com.sprint.findex.specification.IndexDataSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
+import com.sprint.findex.specification.IndexDataSpecifications;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -90,29 +82,6 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("삭제할 지수 데이터를 찾을 수 없음"));
 
         indexDataRepository.delete(indexData);
-    }
-
-
-    @Transactional
-    @Override
-    public String exportToCsv(IndexDataQueryParams params) {
-
-        String sortField = params.sortField() != null ? params.sortField() : "baseDate";
-        Sort.Direction direction =
-            "asc".equalsIgnoreCase(params.sortDirection()) ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-
-        Sort sort = Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
-
-        var spec = IndexDataSpecifications.withFilters(params);
-
-        List<IndexData> rawResults = indexDataRepository.findAll(spec, sort);
-
-        List<IndexDataDto> content = rawResults.stream()
-            .map(IndexDataMapper::toDto)
-            .collect(Collectors.toList());
-
-        return IndexDataCsvExporter.toCsv(content);
     }
 
     @Override

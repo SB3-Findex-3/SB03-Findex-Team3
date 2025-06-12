@@ -9,8 +9,9 @@ import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.Period;
-import java.util.List;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public interface IndexDataService {
@@ -20,8 +21,6 @@ public interface IndexDataService {
     IndexDataDto update(Long id, IndexDataUpdateRequest request);
 
     void delete(Long id);
-
-    String exportToCsv(IndexDataQueryParams params);
 
     CursorPageResponseIndexData<IndexDataDto> findByCursor(IndexDataQueryParams params);
 

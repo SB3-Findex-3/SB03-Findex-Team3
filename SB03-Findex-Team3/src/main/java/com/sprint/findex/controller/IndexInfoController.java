@@ -6,7 +6,7 @@ import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.dto.request.IndexInfoCreateRequest;
 import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
-import com.sprint.findex.dto.response.ErrorResponse;
+import com.sprint.findex.global.exception.ErrorResponse;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import com.sprint.findex.mapper.IndexInfoSearchMapper;

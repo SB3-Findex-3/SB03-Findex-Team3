@@ -140,7 +140,7 @@ public class BasicSyncJobService implements SyncJobService {
         List<Mono<SyncJobDto>> jobMonos = new ArrayList<>();
         for (MarketIndexResponse.MarketIndexData item : items) {
             LocalDate baseDate = parseBaseDate(item.getBasDt());
-            jobMonos.add(saveIfNotExists(indexInfo, baseDate, item, workerIp));
+            jobMonos.add(saveOrUpdateIndexData(indexInfo, baseDate, item, workerIp));
         }
 
         return Flux.merge(jobMonos).collectList();
@@ -151,24 +151,30 @@ public class BasicSyncJobService implements SyncJobService {
         return LocalDate.parse(basDt, DATE_FORMATTER);
     }
 
-    private Mono<SyncJobDto> saveIfNotExists(
+    private Mono<SyncJobDto> saveOrUpdateIndexData(
         IndexInfo indexInfo,
         LocalDate baseDate,
         MarketIndexResponse.MarketIndexData item,
         String workerIp
     ) {
         return Mono.fromSupplier(() -> {
-            boolean exists = indexDataRepository.existsByIndexInfoAndBaseDate(indexInfo, baseDate);
+            IndexData existing = indexDataRepository
+                .findByIndexInfoAndBaseDate(indexInfo, baseDate)
+                .orElse(null);
 
-            if (!exists) {
-                IndexData data = new IndexData(
+            if (existing != null) {
+
+                existing.updateFromApi(item);
+                indexDataRepository.save(existing);
+                log.info("IndexData 업데이트됨: index={}, date={}", indexInfo.getIndexName(), baseDate);
+            } else {
+                IndexData newData = new IndexData(
                     indexInfo, baseDate, SourceType.OPEN_API,
                     item.getMkp(), item.getClpr(), item.getHipr(), item.getLopr(),
                     item.getVs(), item.getFltRt(), item.getTrqu(), item.getTrPrc(), item.getLstgMrktTotAmt()
                 );
-                indexDataRepository.save(data);
-            } else {
-                log.info("⚠️ IndexData already exists for index={}, date={}", indexInfo.getIndexName(), baseDate);
+                indexDataRepository.save(newData);
+                log.info("IndexData 새로 저장됨: index={}, date={}", indexInfo.getIndexName(), baseDate);
             }
 
             SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, baseDate, workerIp, OffsetDateTime.now(), SyncJobResult.SUCCESS);

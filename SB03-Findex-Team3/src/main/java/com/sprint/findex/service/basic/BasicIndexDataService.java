@@ -9,9 +9,8 @@ import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
-import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexData;
-import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexData;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.Period;
@@ -91,28 +90,6 @@ public class BasicIndexDataService implements IndexDataService {
             .orElseThrow(() -> new IllegalArgumentException("[IndexDataService] 삭제할 지수 데이터를 찾을 수 없음"));
 
         indexDataRepository.delete(indexData);
-    }
-
-    @Transactional
-    @Override
-    public String exportToCsv(IndexDataQueryParams params) {
-
-        String sortField = params.sortField() != null ? params.sortField() : "baseDate";
-        Sort.Direction direction =
-            "asc".equalsIgnoreCase(params.sortDirection()) ? Sort.Direction.ASC
-                : Sort.Direction.DESC;
-
-        Sort sort = Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
-
-        var spec = IndexDataSpecifications.withFilters(params);
-
-        List<IndexData> rawResults = indexDataRepository.findAll(spec, sort);
-
-        List<IndexDataDto> content = rawResults.stream()
-            .map(IndexDataMapper::toDto)
-            .collect(Collectors.toList());
-
-        return IndexDataCsvExporter.toCsv(content);
     }
 
     @Override

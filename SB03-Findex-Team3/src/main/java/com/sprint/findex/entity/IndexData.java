@@ -3,6 +3,7 @@ package com.sprint.findex.entity;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.entity.base.BaseEntity;
+import com.sprint.findex.global.dto.MarketIndexResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -120,5 +121,16 @@ public class IndexData extends BaseEntity {
             .equals(this.marketTotalAmount)) {
             this.marketTotalAmount = request.marketTotalAmount();
         }
+    }
+    public void updateFromApi(MarketIndexResponse.MarketIndexData item) {
+        this.marketPrice = item.getMkp();
+        this.closingPrice = item.getClpr();
+        this.highPrice = item.getHipr();
+        this.lowPrice = item.getLopr();
+        this.versus = item.getVs();
+        this.fluctuationRate = item.getFltRt();
+        this.tradingQuantity = item.getTrqu();
+        this.tradingPrice = item.getTrPrc();
+        this.marketTotalAmount = item.getLstgMrktTotAmt();
     }
 }

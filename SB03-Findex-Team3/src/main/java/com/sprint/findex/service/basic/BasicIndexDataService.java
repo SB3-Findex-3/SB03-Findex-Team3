@@ -15,6 +15,8 @@ import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.Period;
 import com.sprint.findex.entity.SourceType;
+import com.sprint.findex.global.exception.CommonException;
+import com.sprint.findex.global.exception.Errors;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
@@ -33,7 +35,6 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -67,7 +68,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public IndexDataDto create(IndexDataCreateRequest request) {
         IndexInfo indexInfo = indexInfoRepository.findById(request.indexInfoId())
-            .orElseThrow(() -> new IllegalArgumentException("[IndexDataService] 참조하는 지수 정보를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 
         IndexData indexData = IndexData.from(indexInfo, request, SourceType.USER);
         return indexDataMapper.toDto(indexDataRepository.save(indexData));
@@ -77,7 +78,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
         IndexData indexData = indexDataRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("[IndexDataService] 수정할 지수 데이터를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_DATA_NOT_FOUND));
 
         indexData.update(request);
         return indexDataMapper.toDto(indexDataRepository.save(indexData));
@@ -87,7 +88,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public void delete(Long id) {
         IndexData indexData = indexDataRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("[IndexDataService] 삭제할 지수 데이터를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_DATA_NOT_FOUND));
 
         indexDataRepository.delete(indexData);
     }
@@ -194,7 +195,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Override
     public IndexChartDto getIndexChart(Long indexInfoId, Period periodType) {
         IndexInfo indexInfo = indexInfoRepository.findById(indexInfoId)
-            .orElseThrow(() -> new NoSuchElementException("[IndexDataService] 지수 정보를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_DATA_NOT_FOUND));
 
         LocalDate startDate = calculateBaseDate(periodType);
         LocalDate currentDate = Instant.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();

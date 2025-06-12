@@ -7,7 +7,7 @@ import com.sprint.findex.dto.response.cursor.CursorPageResponseAutoSyncConfigDto
 
 public interface AutoSyncConfigService {
 
-    AutoSyncConfigDto updateOrCreate(Long id, AutoSyncConfigUpdateRequest request);
+    AutoSyncConfigDto updateEnabled(Long indexInfoId, boolean enabled);
 
     CursorPageResponseAutoSyncConfigDto findByCursor(AutoSyncQueryParams params);
 }

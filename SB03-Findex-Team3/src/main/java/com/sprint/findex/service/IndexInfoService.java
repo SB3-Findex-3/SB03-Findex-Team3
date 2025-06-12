@@ -8,7 +8,6 @@ import com.sprint.findex.dto.response.IndexInfoSummaryDto;
 import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexInfoDto;
 import java.util.List;
 
-
 public interface IndexInfoService {
 
     IndexInfoDto createIndexInfo(IndexInfoCreateCommand command);

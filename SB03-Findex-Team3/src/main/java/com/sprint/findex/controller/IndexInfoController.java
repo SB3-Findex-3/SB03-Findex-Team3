@@ -109,7 +109,7 @@ public class IndexInfoController implements IndexInfoApi {
         indexInfoService.deleteIndexInfo(id);
 
         return ResponseEntity
-            .noContent()
+            .status(HttpStatus.NO_CONTENT)
             .build();
     }
 }

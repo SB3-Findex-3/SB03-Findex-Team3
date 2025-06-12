@@ -1,11 +1,11 @@
 package com.sprint.findex.controller;
 
 import com.sprint.findex.controller.api.IndexInfoApi;
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import com.sprint.findex.dto.request.IndexInfoCreateCommand;
 import com.sprint.findex.dto.request.IndexInfoCreateRequest;
 import com.sprint.findex.dto.request.IndexInfoUpdateRequest;
-import com.sprint.findex.dto.response.CursorPageResponseIndexInfoDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexInfoDto;
 import com.sprint.findex.dto.response.ErrorResponse;
 import com.sprint.findex.dto.response.IndexInfoDto;
 import com.sprint.findex.dto.response.IndexInfoSummaryDto;

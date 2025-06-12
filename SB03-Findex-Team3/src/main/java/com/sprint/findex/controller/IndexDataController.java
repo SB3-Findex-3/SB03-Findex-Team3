@@ -7,7 +7,7 @@ import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
-import com.sprint.findex.dto.response.CursorPageResponseIndexData;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
 import com.sprint.findex.entity.Period;
@@ -72,18 +72,18 @@ public class IndexDataController implements IndexDataApi {
 
     @GetMapping
     public ResponseEntity<CursorPageResponseIndexData<IndexDataDto>> findByCursor(@ModelAttribute IndexDataQueryParams params) {
-        log.debug("📌 [커서 조회] sortField={}, cursor={}, idAfter={}, direction={}",
+        log.debug("[IndexDataController] 커서 조회 결과: sortField={}, cursor={}, idAfter={}, direction={}",
             params.sortField(), params.cursor(), params.idAfter(), params.sortDirection());
 
         CursorPageResponseIndexData<IndexDataDto> result = indexDataService.findByCursor(params);
-        log.debug("✅ 커서 조회 완료] 결과 수: {}", result.content().size());
+        log.debug("[IndexDataController] 조회 된 결과 수: {}", result.content().size());
         return ResponseEntity.ok(result);
     }
 
 
     @GetMapping("/export/csv")
     public ResponseEntity<byte[]> exportCsv(@ModelAttribute IndexDataQueryParams params) {
-        log.debug("🟡 [CSV Export 요청] {}", params);
+        log.debug("[IndexDataController] CSV Export 요청: {}", params);
 
         List<IndexDataDto> data = indexDataService.findAllByConditions(params);
         String csv = IndexDataCsvExporter.toCsv(data);

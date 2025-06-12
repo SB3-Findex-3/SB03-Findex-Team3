@@ -3,21 +3,36 @@ spring:
     name: findex
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/findex
-    username: findex_user
-    password: 1234
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+#  jpa:
+#    hibernate:
+#      ddl-auto: none
+#    generate-ddl: false
+#    database: postgresql
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        highlight_sql: true
+#        use_sql_comments: true
+
   jpa:
     hibernate:
-      ddl-auto: none
-    generate-ddl: false
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 api:
   data:
@@ -25,7 +40,7 @@ api:
     base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 springdoc:
   api-docs:

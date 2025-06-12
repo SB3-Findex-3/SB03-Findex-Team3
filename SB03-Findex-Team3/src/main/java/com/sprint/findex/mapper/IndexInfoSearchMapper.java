@@ -11,7 +11,7 @@ public class IndexInfoSearchMapper {
         String indexClassification,
         String indexName,
         Boolean favorite,
-        Long idAfter,
+        String idAfter,
         String cursor,
         String sortField,
         String sortDirection,

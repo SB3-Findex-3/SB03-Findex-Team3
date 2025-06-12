@@ -1,11 +1,18 @@
 package com.sprint.findex.controller;
 
+import com.sprint.findex.controller.api.IndexDataApi;
+import com.sprint.findex.dto.dashboard.IndexChartDto;
+import com.sprint.findex.dto.dashboard.IndexPerformanceDto;
+import com.sprint.findex.dto.dashboard.RankedIndexPerformanceDto;
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.dto.response.CursorPageResponseIndexData;
 import com.sprint.findex.dto.response.IndexDataCsvExporter;
 import com.sprint.findex.dto.response.IndexDataDto;
+import com.sprint.findex.entity.Period;
+import com.sprint.findex.repository.IndexDataRepository;
+import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -23,34 +30,44 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/index-data")
 @RequiredArgsConstructor
 @Slf4j
-public class IndexDataController {
+public class IndexDataController implements IndexDataApi {
 
     private final IndexDataService indexDataService;
+    private final IndexInfoRepository indexInfoRepository;
+    private final IndexDataRepository indexDataRepository;
 
     @PostMapping
     public ResponseEntity<IndexDataDto> create(@RequestBody IndexDataCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(indexDataService.create(request));
+        IndexDataDto indexData = indexDataService.create(request);
+
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(indexData);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<IndexDataDto> update(
-        @PathVariable Long id,
-        @RequestBody IndexDataUpdateRequest request
-    ) {
-        return ResponseEntity.ok(indexDataService.update(id, request));
+    public ResponseEntity<IndexDataDto> update(@PathVariable Long id,
+        @RequestBody IndexDataUpdateRequest request){
+        IndexDataDto updatedIndexData = indexDataService.update(id, request);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(updatedIndexData);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id){
         indexDataService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 
     @GetMapping
@@ -104,6 +121,33 @@ public class IndexDataController {
 
         name.append(".csv");
         return name.toString();
+    }
+
+    @GetMapping("/{id}/chart")
+    public ResponseEntity<IndexChartDto> getChartData(
+        @PathVariable("id") Long indexInfoId,
+        @RequestParam(value = "periodType", defaultValue = "DAILY") Period period) {
+
+        IndexChartDto chartData = indexDataService.getIndexChart(indexInfoId, period);
+        return ResponseEntity.ok(chartData);
+    }
+
+    @Override
+    @GetMapping("/performance/favorite")
+    public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexPerformances(
+        @RequestParam(value = "periodType", defaultValue = "DAILY") Period period ) {
+        List<IndexPerformanceDto> result = indexDataService.getFavoriteIndexPerformances(period);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/performance/rank")
+    public ResponseEntity<List<RankedIndexPerformanceDto>> getPerformanceRank(
+        @RequestParam(required = false) Long indexInfoId,
+        @RequestParam(value = "periodType", defaultValue = "DAILY") Period period,
+        @RequestParam(defaultValue = "10") int limit
+    ) {
+        List<RankedIndexPerformanceDto> result = indexDataService.getIndexPerformanceRank(indexInfoId, period, limit);
+        return ResponseEntity.ok(result);
     }
 
 }

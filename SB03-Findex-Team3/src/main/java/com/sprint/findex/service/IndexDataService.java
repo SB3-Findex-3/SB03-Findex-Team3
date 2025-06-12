@@ -21,8 +21,6 @@ public interface IndexDataService {
 
     void delete(Long id);
 
-    String exportToCsv(IndexDataQueryParams params);
-
     CursorPageResponseIndexData<IndexDataDto> findByCursor(IndexDataQueryParams params);
 
     List<IndexDataDto> findAllByConditions(IndexDataQueryParams params);

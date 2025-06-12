@@ -3,7 +3,7 @@ package com.sprint.findex.controller.api;
 import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.dto.request.AutoSyncConfigUpdateRequest;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
-import com.sprint.findex.dto.response.CursorPageResponseAutoSyncConfigDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseAutoSyncConfigDto;
 import com.sprint.findex.dto.response.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,7 +51,7 @@ public interface AutoSyncConfigApi {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PatchMapping("/{id}")
-    AutoSyncConfigDto update(
+    AutoSyncConfigDto updateEnabled(
         @Parameter(description = "자동 연동 설정 ID", required = true)
         @PathVariable Long id,
         @Parameter(description = "자동 연동 설정 수정 요청", required = true)

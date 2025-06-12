@@ -1,7 +1,6 @@
 package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.request.AutoSyncConfigUpdateRequest;
 import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.dto.response.AutoSyncConfigDto;
 import com.sprint.findex.dto.response.cursor.CursorPageResponseAutoSyncConfigDto;
@@ -52,7 +51,7 @@ public class BasicAutoSyncConfigService implements AutoSyncConfigService {
             })
             .orElseGet(() -> {
 
-                IndexInfo indexInfo = indexInfoRepository.findById(id)
+                IndexInfo indexInfo = indexInfoRepository.findById(indexInfoId)
                     .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 
                 AutoSyncConfig newConfig = AutoSyncConfig.ofIndexInfo(indexInfo);

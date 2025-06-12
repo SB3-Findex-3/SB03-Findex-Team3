@@ -67,7 +67,6 @@ public class BasicSyncJobService implements SyncJobService {
     private final AutoSyncConfigRepository autoSyncConfigRepository;
     private final SyncJobMapper syncJobMapper;
     private final ObjectMapper objectMapper;
-    private final AutoSyncConfigRepository autoSyncConfigRepository;
 
     @Value("${api.data.service-key}")
     private String serviceKey;

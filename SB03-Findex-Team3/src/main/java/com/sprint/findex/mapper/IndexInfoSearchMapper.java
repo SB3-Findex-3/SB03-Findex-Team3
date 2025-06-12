@@ -1,6 +1,6 @@
 package com.sprint.findex.mapper;
 
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ public class IndexInfoSearchMapper {
         String indexClassification,
         String indexName,
         Boolean favorite,
-        Long idAfter,
+        String idAfter,
         String cursor,
         String sortField,
         String sortDirection,

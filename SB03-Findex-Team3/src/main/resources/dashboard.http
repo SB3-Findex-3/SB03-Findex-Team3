@@ -1,0 +1,11 @@
+### 지수 차트 조회
+GET http://localhost:8080/api/index-data/1/chart?periodType=QUARTERLY
+Content-Type: application/json
+
+### 주요 지수 조회
+GET http://localhost:8080/api/index-data/performance/favorite?periodType=WEEKLY
+
+### 지수 성과 랭킹 조회
+GET http://localhost:8080/api/index-data/performance/rank?periodType=WEEKLY&limit=3
+
+

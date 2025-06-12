@@ -1,20 +1,21 @@
 package com.sprint.findex.dto.request;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record IndexDataCreateRequest(
-    Long indexInfoId,
-    LocalDate baseDate,
-    BigDecimal marketPrice,
-    BigDecimal closingPrice,
-    BigDecimal highPrice,
-    BigDecimal lowPrice,
-    BigDecimal versus,
-    BigDecimal fluctuationRate,
-    Long tradingQuantity,
-    Long tradingPrice,
-    Long marketTotalAmount
+    @NotNull Long indexInfoId,
+    @NotNull LocalDate baseDate,
+    @NotNull BigDecimal marketPrice,
+    @NotNull BigDecimal closingPrice,
+    @NotNull BigDecimal highPrice,
+    @NotNull BigDecimal lowPrice,
+    @NotNull BigDecimal versus,
+    @NotNull BigDecimal fluctuationRate,
+    @NotNull Long tradingQuantity,
+    @NotNull Long tradingPrice,
+    @NotNull Long marketTotalAmount
 ) {
 
 }

@@ -13,8 +13,7 @@ spring:
       idle-timeout: 30000
   jpa:
     hibernate:
-      ddl-auto: none
-    generate-ddl: false
+      ddl-auto: update
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:

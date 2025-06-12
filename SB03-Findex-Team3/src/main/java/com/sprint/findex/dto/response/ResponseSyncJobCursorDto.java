@@ -1,4 +1,4 @@
-package com.sprint.findex.dto;
+package com.sprint.findex.dto.response;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

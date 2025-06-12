@@ -6,6 +6,7 @@ import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
 import com.sprint.findex.dto.response.CursorPageResponseSyncJobDto;
 import com.sprint.findex.dto.response.SyncJobDto;
+import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.SourceType;
@@ -14,7 +15,10 @@ import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.global.dto.MarketIndexResponse;
+import com.sprint.findex.global.exception.CommonException;
+import com.sprint.findex.global.exception.Errors;
 import com.sprint.findex.mapper.SyncJobMapper;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
@@ -60,6 +64,7 @@ public class BasicSyncJobService implements SyncJobService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
     private final SyncJobRepository syncJobRepository;
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
     private final SyncJobMapper syncJobMapper;
     private final ObjectMapper objectMapper;
 
@@ -105,7 +110,7 @@ public class BasicSyncJobService implements SyncJobService {
 
     private Mono<IndexInfo> fetchIndexInfo(Long indexInfoId) {
         return Mono.fromSupplier(() -> indexInfoRepository.findById(indexInfoId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid IndexInfo ID: " + indexInfoId)));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND)));
     }
 
     private Mono<List<MarketIndexResponse.MarketIndexData>> fetchMarketIndexData(IndexDataSyncRequest request, IndexInfo indexInfo) {
@@ -314,6 +319,11 @@ public class BasicSyncJobService implements SyncJobService {
                 SyncJob savedSyncJob = syncJobRepository.save(newSyncJob);
                 SyncJobDto syncJobDto = syncJobMapper.toDto(savedSyncJob);
                 syncJobs.add(syncJobDto);
+
+
+                AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(indexInfo);
+                config.setEnabled(false);
+                autoSyncConfigRepository.save(config);
 
             }catch (Exception e){
                 log.error("불러온 지수 정보 처리 실패", e);
@@ -550,7 +560,7 @@ public class BasicSyncJobService implements SyncJobService {
 
         } catch (Exception e) {
             log.error("커서 생성 실패: sortField={}, syncJobDto={}", sortField, syncJobDto, e);
-            throw new RuntimeException("커서 생성에 실패했습니다.", e);
+            throw new CommonException(Errors.INVALID_CURSOR, e);
         }
     }
 
@@ -563,7 +573,7 @@ public class BasicSyncJobService implements SyncJobService {
         }
         catch (Exception e){
             log.error("SyncJobService: 입력커서: {} 디코딩 실패 ", cursor);
-            throw new IllegalArgumentException(e);
+            throw new CommonException(Errors.INVALID_CURSOR, e);
         }
     }
 

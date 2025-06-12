@@ -16,11 +16,13 @@ import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.Period;
 import com.sprint.findex.entity.SourceType;
+import com.sprint.findex.global.exception.CommonException;
+import com.sprint.findex.global.exception.Errors;
 import com.sprint.findex.mapper.IndexDataMapper;
 import com.sprint.findex.repository.IndexDataRepository;
-import com.sprint.findex.specification.IndexDataSpecifications;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.service.IndexDataService;
+import com.sprint.findex.specification.IndexDataSpecifications;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -34,17 +36,17 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -67,7 +69,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public IndexDataDto create(IndexDataCreateRequest request) {
         IndexInfo indexInfo = indexInfoRepository.findById(request.indexInfoId())
-            .orElseThrow(() -> new IllegalArgumentException("참조하는 지수 정보를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND));
 
         IndexData indexData = IndexData.from(indexInfo, request, SourceType.USER);
         return indexDataMapper.toDto(indexDataRepository.save(indexData));
@@ -77,7 +79,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
         IndexData indexData = indexDataRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("수정할 지수 데이터를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_DATA_NOT_FOUND));
 
         indexData.update(request);
         return indexDataMapper.toDto(indexDataRepository.save(indexData));
@@ -87,7 +89,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Transactional
     public void delete(Long id) {
         IndexData indexData = indexDataRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("삭제할 지수 데이터를 찾을 수 없음"));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_DATA_NOT_FOUND));
 
         indexDataRepository.delete(indexData);
     }
@@ -217,7 +219,7 @@ public class BasicIndexDataService implements IndexDataService {
     @Override
     public IndexChartDto getIndexChart(Long indexInfoId, Period periodType) {
         IndexInfo indexInfo = indexInfoRepository.findById(indexInfoId)
-            .orElseThrow(() -> new NoSuchElementException("지수 정보를 찾을 수 없습니다."));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_DATA_NOT_FOUND));
 
         LocalDate startDate = calculateBaseDate(periodType);
         LocalDate currentDate = Instant.now().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();

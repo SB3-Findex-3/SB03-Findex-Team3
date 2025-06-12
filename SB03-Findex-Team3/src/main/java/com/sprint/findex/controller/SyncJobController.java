@@ -80,6 +80,8 @@ public class SyncJobController {
         );
 
         CursorPageResponseSyncJobDto response = syncJobService.findSyncJobByCursor(syncParams);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(response);
     }
 }

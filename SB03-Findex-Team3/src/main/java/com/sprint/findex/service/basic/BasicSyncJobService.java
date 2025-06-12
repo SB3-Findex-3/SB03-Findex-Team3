@@ -244,37 +244,98 @@ public class BasicSyncJobService implements SyncJobService {
         return Mono.just(toDto(job));
     }
 
-    @Override
-    public Mono<List<SyncJobDto>> fetchAllIndexInfo(String workerIp){
 
+    //    private Mono<List<ApiResponse.StockIndexItem>> fetchAllIndexInfosFromApi() {
+//
+//        String url = String.format("%s/getStockMarketIndex?serviceKey=%s&resultType=json&pageNo=%d&numOfRows=%d",
+//            baseUrl, serviceKey, 1, 200);
+//
+//        return callApi(url)
+//            .flatMap(firstResponse -> {
+//                List<ApiResponse.StockIndexItem> allItems = new ArrayList<>();
+//
+//                if (firstResponse.getBody() != null && firstResponse.getBody().getItems() != null) {
+//                    allItems.addAll(firstResponse.getBody().getItems().getItem());
+//                }
+//
+//                return Mono.just(allItems);
+//            });
+//    }
+
+
+
+//    private List<ApiResponse.StockIndexItem> fetchAllIndexInfosFromApi() {
+//
+//        String url = String.format("%s/getStockMarketIndex?serviceKey=%s&resultType=json&pageNo=%d&numOfRows=%d",
+//            baseUrl, serviceKey, 1, 200);
+//
+//
+//        try {
+//            // .block()으로 동기식 처리
+//            ApiResponse response = callApi(url).block();  // ← 여기가 핵심!
+//
+//            if (response != null && response.getBody() != null && response.getBody().getItems() != null) {
+//                return response.getBody().getItems().getItem();
+//            }
+//            return new ArrayList<>();
+//
+//        } catch (Exception e) {
+//            log.error("[SyncJobService] API 호출 실패", e);
+//            return new ArrayList<>();
+//        }
+//
+//        return callApi(url)
+//            .flatMap(firstResponse -> {
+//                List<ApiResponse.StockIndexItem> allItems = new ArrayList<>();
+//
+//                if (firstResponse.getBody() != null && firstResponse.getBody().getItems() != null) {
+//                    allItems.addAll(firstResponse.getBody().getItems().getItem());
+//                }
+//
+//                return Mono.just(allItems);
+//            });
+//    }
+
+
+
+
+    @Override
+    public List<SyncJobDto> fetchAllIndexInfo(String workerIp) {
         String settingWorkerIp = (workerIp == null || workerIp.isBlank()) ? SYSTEM_WORKER : workerIp;
 
-        return fetchAllIndexInfosFromApi()
-            .map(items -> processIndexInfoSync(items, settingWorkerIp))
-            .doOnSuccess(syncJobs ->
-                log.info("[SyncJobService] 지수 정보 연동 성공!"))
-            .doOnError(error ->
-                log.error("[SyncJobService] 지수 정보 연동 실패: ", error))
+        try {
+            List<ApiResponse.StockIndexItem> items = fetchAllIndexInfosFromApi();
+            log.info("[SyncJobService] API에서 {}개 아이템 조회 완료", items.size());
 
-            .onErrorResume(error ->
-                handleIndexInfoSyncError(error, settingWorkerIp));
+            List<SyncJobDto> result = processIndexInfoSync(items, settingWorkerIp);
+            log.info("[SyncJobService] 지수 정보 연동 성공! 처리된 아이템: {}개", result.size());
+            return result;
+
+        } catch (Exception error) {
+            log.error("[SyncJobService] 지수 정보 연동 실패: ", error);
+            return handleIndexInfoSyncError(error, settingWorkerIp);
+        }
     }
 
-    private Mono<List<ApiResponse.StockIndexItem>> fetchAllIndexInfosFromApi() {
+    private List<ApiResponse.StockIndexItem> fetchAllIndexInfosFromApi() {
 
         String url = String.format("%s/getStockMarketIndex?serviceKey=%s&resultType=json&pageNo=%d&numOfRows=%d",
             baseUrl, serviceKey, 1, 200);
 
-        return callApi(url)
-            .flatMap(firstResponse -> {
-                List<ApiResponse.StockIndexItem> allItems = new ArrayList<>();
 
-                if (firstResponse.getBody() != null && firstResponse.getBody().getItems() != null) {
-                    allItems.addAll(firstResponse.getBody().getItems().getItem());
-                }
+        try {
+            // .block()으로 동기식 처리
+            ApiResponse response = callApi(url).block();
 
-                return Mono.just(allItems);
-            });
+            if (response != null && response.getBody() != null && response.getBody().getItems() != null) {
+                return response.getBody().getItems().getItem();
+            }
+            return new ArrayList<>();
+
+        } catch (Exception e) {
+            log.error("[SyncJobService] API 호출 실패", e);
+            return new ArrayList<>();
+        }
     }
 
     private Mono<ApiResponse> callApi(String url) {
@@ -401,7 +462,7 @@ public class BasicSyncJobService implements SyncJobService {
         );
     }
 
-    private Mono<List<SyncJobDto>> handleIndexInfoSyncError(Throwable error, String workerIp) {
+    private List<SyncJobDto> handleIndexInfoSyncError(Throwable error, String workerIp) {
         log.error("[SyncJobService] 지수 정보 동기화 실패", error);
 
         SyncJob failedJob = new SyncJob(
@@ -424,7 +485,7 @@ public class BasicSyncJobService implements SyncJobService {
             failedJob.getResult()
         );
 
-        return Mono.just(List.of(failedJobDto));
+        return List.of(failedJobDto);
     }
 
     private LocalDate parseDate(String dateString) {

@@ -36,14 +36,24 @@ public class SyncJobController implements SyncJobApi {
     private final SyncJobService syncJobService;
     private final SyncJobQueryParamsMapper syncJobQueryParamsMapper;
 
+//    @PostMapping("index-infos")
+//    public ResponseEntity<List<SyncJobDto>> syncIndexInfoAsync(HttpServletRequest httpRequest) {
+//        String clientIp = IpUtil.getClientIp(httpRequest);
+//        Mono<List<SyncJobDto>> result = syncJobService.fetchAllIndexInfo(clientIp);
+//
+//        return ResponseEntity
+//            .status(HttpStatus.OK)
+//            .body(result.block());
+//    }
+
     @PostMapping("index-infos")
     public ResponseEntity<List<SyncJobDto>> syncIndexInfoAsync(HttpServletRequest httpRequest) {
         String clientIp = IpUtil.getClientIp(httpRequest);
-        Mono<List<SyncJobDto>> result = syncJobService.fetchAllIndexInfo(clientIp);
+        List<SyncJobDto> result = syncJobService.fetchAllIndexInfo(clientIp);  // .block() 제거
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(result.block());
+            .body(result);
     }
 
     @PostMapping("index-data")

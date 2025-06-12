@@ -1,11 +1,12 @@
 package com.sprint.findex.service.basic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.findex.dto.ResponseSyncJobCursorDto;
+import com.sprint.findex.dto.response.ResponseSyncJobCursorDto;
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
-import com.sprint.findex.dto.response.CursorPageResponseSyncJobDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
 import com.sprint.findex.dto.response.SyncJobDto;
+import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexData;
 import com.sprint.findex.entity.IndexInfo;
 import com.sprint.findex.entity.SourceType;
@@ -14,7 +15,10 @@ import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;
 import com.sprint.findex.global.dto.ApiResponse;
 import com.sprint.findex.global.dto.MarketIndexResponse;
+import com.sprint.findex.global.exception.CommonException;
+import com.sprint.findex.global.exception.Errors;
 import com.sprint.findex.mapper.SyncJobMapper;
+import com.sprint.findex.repository.AutoSyncConfigRepository;
 import com.sprint.findex.repository.IndexDataRepository;
 import com.sprint.findex.repository.IndexInfoRepository;
 import com.sprint.findex.repository.SyncJobRepository;
@@ -60,8 +64,10 @@ public class BasicSyncJobService implements SyncJobService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
     private final SyncJobRepository syncJobRepository;
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
     private final SyncJobMapper syncJobMapper;
     private final ObjectMapper objectMapper;
+    private final AutoSyncConfigRepository autoSyncConfigRepository;
 
     @Value("${api.data.service-key}")
     private String serviceKey;
@@ -98,28 +104,27 @@ public class BasicSyncJobService implements SyncJobService {
 
     private void validateRequest(IndexDataSyncRequest request) {
         if (request.baseDateFrom() == null || request.baseDateTo() == null) {
-            throw new IllegalArgumentException("Start date and end date must be provided.");
+            throw new IllegalArgumentException("[SyncJobService] 시작 날짜와 마지막 날짜는 비어있을 수 없음");
         }
         if (request.baseDateFrom().isAfter(request.baseDateTo())) {
-            throw new IllegalArgumentException("Start date cannot be after end date.");
+            throw new IllegalArgumentException("[SyncJobService] 시작 날짜가 마지막 날짜보다 이후 시점임");
         }
     }
 
     private Mono<IndexInfo> fetchIndexInfo(Long indexInfoId) {
         return Mono.fromSupplier(() -> indexInfoRepository.findById(indexInfoId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid IndexInfo ID: " + indexInfoId)));
+            .orElseThrow(() -> new CommonException(Errors.INDEX_INFO_NOT_FOUND)));
     }
 
     private Mono<List<MarketIndexResponse.MarketIndexData>> fetchMarketIndexData(IndexDataSyncRequest request, IndexInfo indexInfo) {
         String url = createMarketIndexUrl(request, indexInfo);
-        log.debug("📡 API URI: {}", url);
 
         return marketIndexWebClient.get()
             .uri(URI.create(url))
             .retrieve()
             .bodyToMono(MarketIndexResponse.class)
             .map(response -> response.getResponse().getBody().getItems().getItem())
-            .doOnError(e -> log.error("Failed to fetch market data for index: {}", indexInfo.getIndexName()));
+            .doOnError(e -> log.error("[SyncJobService] 지수 시장 데이터 불러오기 실패: {}", indexInfo.getIndexName()));
     }
 
     private String createMarketIndexUrl(IndexDataSyncRequest request, IndexInfo indexInfo) {
@@ -159,7 +164,6 @@ public class BasicSyncJobService implements SyncJobService {
         return Flux.merge(jobMonos).collectList();
     }
 
-
     private LocalDate parseBaseDate(String basDt) {
         return LocalDate.parse(basDt, DATE_FORMATTER);
     }
@@ -180,7 +184,7 @@ public class BasicSyncJobService implements SyncJobService {
                 existing.updateFromApi(item);
                 indexDataRepository.save(existing);
 
-                log.info("IndexData 업데이트됨: classification={}, name={}, date={}",
+                log.info("[SyncJobService] IndexData 업데이트됨: classification={}, name={}, date={}",
                     indexInfo.getIndexClassification(), indexInfo.getIndexName(), baseDate,
                     item.getClpr(), item.getTrqu(), item.getTrPrc());
             } else {
@@ -190,9 +194,10 @@ public class BasicSyncJobService implements SyncJobService {
                     item.getVs(), item.getFltRt(), item.getTrqu(), item.getTrPrc(),
                     item.getLstgMrktTotAmt()
                 );
+
                 indexDataRepository.save(newData);
 
-                log.info("IndexData 새로 저장됨: classification={}, name={}, date={}",
+                log.info("[SyncJobService] IndexData 새로 저장됨: classification={}, name={}, date={}",
                     indexInfo.getIndexClassification(), indexInfo.getIndexName(), baseDate,
                     item.getClpr(), item.getTrqu(), item.getTrPrc());
             }
@@ -211,7 +216,6 @@ public class BasicSyncJobService implements SyncJobService {
         });
     }
 
-
     private SyncJobDto toDto(SyncJob job) {
         return new SyncJobDto(
             job.getId(),
@@ -225,17 +229,15 @@ public class BasicSyncJobService implements SyncJobService {
     }
 
     private Mono<SyncJobDto> handleError(Throwable e, IndexDataSyncRequest request, Long indexInfoId, String workerIp) {
-        log.error("동기화 실패: indexInfoId={}, 기간={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
+        log.error("[SyncJobService] 동기화 실패: indexInfo Id={}, 기간={}~{}", indexInfoId, request.baseDateFrom(), request.baseDateTo(), e);
 
-        // 실제 IndexInfo 조회 시도
         IndexInfo indexInfo = null;
         try {
             indexInfo = indexInfoRepository.findById(indexInfoId).orElse(null);
         } catch (Exception ex) {
-            log.error("Failed to fetch IndexInfo for error handling", ex);
+            log.error("[SyncJobService] 오류 처리를 위한 IndexInfo fetch 실패: ", ex);
         }
 
-        // 조회 실패 시 임시 객체 생성
         if (indexInfo == null) {
             indexInfo = new IndexInfo(
                 "Unknown",
@@ -246,7 +248,6 @@ public class BasicSyncJobService implements SyncJobService {
                 SourceType.OPEN_API,
                 false
             );
-            // ID 설정이 필요하면 여기서 설정
         }
         SyncJob job = new SyncJob(SyncJobType.INDEX_DATA, indexInfo, request.baseDateFrom(), workerIp, OffsetDateTime.now(), SyncJobResult.FAILED);
         syncJobRepository.save(job);
@@ -262,11 +263,10 @@ public class BasicSyncJobService implements SyncJobService {
         return fetchAllIndexInfosFromApi()
             .map(items -> processIndexInfoSync(items, settingWorkerIp))
             .doOnSuccess(syncJobs ->
-                log.info("지수 정보 연동 성공"))
+                log.info("[SyncJobService] 지수 정보 연동 성공!"))
             .doOnError(error ->
-                log.error("지수 정보 연동 실패", error))
+                log.error("[SyncJobService] 지수 정보 연동 실패: ", error))
 
-            // (.onErrorResume 이게 뭔지 확인해보기)
             .onErrorResume(error ->
                 handleIndexInfoSyncError(error, settingWorkerIp));
     }
@@ -291,7 +291,7 @@ public class BasicSyncJobService implements SyncJobService {
     private Mono<ApiResponse> callApi(String url) {
         try{
             URI uri = new URI(url);
-            log.info("API 호출: {}", url.replaceAll("serviceKey=[^&]*", "serviceKey=****"));
+            log.info("[SyncJobService] API 호출: {}", url.replaceAll("serviceKey=[^&]*", "serviceKey=****"));
 
             return marketIndexWebClient.get()
                 .uri(uri)
@@ -299,12 +299,12 @@ public class BasicSyncJobService implements SyncJobService {
                 .retrieve()
                 .bodyToMono(ApiResponse.class)
                 .retry(2)
-                .doOnNext(response -> System.out.println("API 호출 성공!"))
-                .doOnError(error -> System.out.println("API 호출 실패: " + error.getMessage()));
+                .doOnNext(response -> System.out.println("[SyncJobService] API 호출 성공!"))
+                .doOnError(error -> System.out.println("[SyncJobService] API 호출 실패: " + error.getMessage()));
 
         }catch (URISyntaxException e) {
-            log.error("URI 변환 실패: {}", url, e);
-            return Mono.error(new RuntimeException("URI 변환 실패: " + e.getMessage()));
+            log.error("[SyncJobService] URI 변환 실패: {}", url, e);
+            return Mono.error(new RuntimeException(e.getMessage()));
         }
     }
 
@@ -350,8 +350,13 @@ public class BasicSyncJobService implements SyncJobService {
                 SyncJobDto syncJobDto = syncJobMapper.toDto(savedSyncJob);
                 syncJobs.add(syncJobDto);
 
+
+                AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(indexInfo);
+                config.setEnabled(false);
+                autoSyncConfigRepository.save(config);
+
             }catch (Exception e){
-                log.error("불러온 지수 정보 처리 실패", e);
+                log.error("[SyncJobService] 불러온 지수 정보 처리 실패", e);
 
                 SyncJobDto failed = createFailedSyncJobDto(item, workerIp);
                 syncJobs.add(failed);
@@ -368,8 +373,7 @@ public class BasicSyncJobService implements SyncJobService {
     }
 
     private IndexInfo createNewIndexInfo(ApiResponse.StockIndexItem item) {
-
-        return new IndexInfo(
+        IndexInfo newIndexInfo = new IndexInfo(
             item.getIndexClassification(),
             item.getIndexName(),
             parseInteger(item.getEmployedItemsCount()),
@@ -378,6 +382,14 @@ public class BasicSyncJobService implements SyncJobService {
             SourceType.OPEN_API,
             false
         );
+
+        indexInfoRepository.save(newIndexInfo);
+
+        AutoSyncConfig config = AutoSyncConfig.ofIndexInfo(newIndexInfo);
+        config.setEnabled(false);
+        autoSyncConfigRepository.save(config);
+
+        return newIndexInfo;
     }
 
     private SyncJob createSyncJob(IndexInfo indexInfo, String workerIp){
@@ -406,7 +418,7 @@ public class BasicSyncJobService implements SyncJobService {
     }
 
     private Mono<List<SyncJobDto>> handleIndexInfoSyncError(Throwable error, String workerIp) {
-        log.error("지수 정보 동기화 실패", error);
+        log.error("[SyncJobService] 지수 정보 동기화 실패", error);
 
         SyncJob failedJob = new SyncJob(
             SyncJobType.INDEX_INFO,
@@ -433,13 +445,13 @@ public class BasicSyncJobService implements SyncJobService {
 
     private LocalDate parseDate(String dateString) {
         if (dateString == null || dateString.trim().isEmpty()) {
-            log.warn("기준시점이 비어있습니다. 현재 날짜를 사용합니다.");
+            log.warn("[SyncJobService] 기준시점이 비어있음. 현재 날짜 사용");
             return LocalDate.now();
         }
         try {
             return LocalDate.parse(dateString.trim(), DATE_FORMATTER);
         } catch (Exception e) {
-            log.warn("날짜 파싱 실패: {}, 현재 날짜 사용", dateString);
+            log.warn("[SyncJobService] LocalDate 파싱 실패: {}, 현재 날짜 사용", dateString);
             return LocalDate.now();
         }
     }
@@ -449,10 +461,9 @@ public class BasicSyncJobService implements SyncJobService {
             return null;
         }
         try {
-            // 콤마, 공백 제거 후 변환
             return new BigDecimal(value.replaceAll(",", "").trim());
         } catch (NumberFormatException e) {
-            log.warn("BigDecimal 파싱 실패: {}, null 반환", value);
+            log.warn("[SyncJobService] BigDecimal 파싱 실패: {}, null 반환", value);
             return null;
         }
     }
@@ -464,7 +475,7 @@ public class BasicSyncJobService implements SyncJobService {
         try {
             return Integer.parseInt(value.replaceAll(",", "").trim());
         } catch (NumberFormatException e) {
-            log.warn("정수 파싱 실패: {}, 기본값 0 사용", value);
+            log.warn("[SyncJobService] Integer 파싱 실패: {}, 기본값 0 사용", value);
             return 0;
         }
     }
@@ -493,7 +504,7 @@ public class BasicSyncJobService implements SyncJobService {
         ResponseSyncJobCursorDto responseSyncJobCursorDto = null;
         if (params.cursor() != null){
             responseSyncJobCursorDto = parseCurser(params.cursor());
-            log.info("IndexInfoService: 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}", responseSyncJobCursorDto);
+            log.info("[SyncJobService] 지수 목록 조회를 위해 커서 디코딩 완료, 디코딩 된 커서: {}", responseSyncJobCursorDto);
         }
 
         Specification<SyncJob> spec = SyncJobSpecifications.withFilters(responseSyncJobCursorDto, params);
@@ -563,7 +574,7 @@ public class BasicSyncJobService implements SyncJobService {
                     );
 
                 default -> {
-                    log.warn("알 수 없는 정렬 필드: {}", sortField);
+                    log.warn("[SyncJobService] 알 수 없는 정렬 필드: {}", sortField);
                     yield new ResponseSyncJobCursorDto(
                         syncJobDto.id(),
                         null,
@@ -584,8 +595,8 @@ public class BasicSyncJobService implements SyncJobService {
             return encodedSyncJobCursors;
 
         } catch (Exception e) {
-            log.error("커서 생성 실패: sortField={}, syncJobDto={}", sortField, syncJobDto, e);
-            throw new RuntimeException("커서 생성에 실패했습니다.", e);
+            log.error("[SyncJobService] 커서 생성 실패: sortField={}, syncJobDto={}", sortField, syncJobDto, e);
+            throw new CommonException(Errors.INVALID_CURSOR, e);
         }
     }
 
@@ -597,9 +608,8 @@ public class BasicSyncJobService implements SyncJobService {
             return objectMapper.readValue(dateString, ResponseSyncJobCursorDto.class);
         }
         catch (Exception e){
-            log.error("SyncJobService: 입력커서: {} 디코딩 실패 ", cursor);
-            throw new IllegalArgumentException(e);
+            log.error("[SyncJobService] 입력커서: {} 디코딩 실패 ", cursor);
+            throw new CommonException(Errors.INVALID_CURSOR, e);
         }
     }
-
 }

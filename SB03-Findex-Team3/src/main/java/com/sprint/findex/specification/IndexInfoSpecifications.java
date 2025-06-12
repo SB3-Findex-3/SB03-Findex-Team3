@@ -1,6 +1,6 @@
 package com.sprint.findex.specification;
 
-import com.sprint.findex.dto.IndexInfoSearchDto;
+import com.sprint.findex.dto.response.IndexInfoSearchDto;
 import com.sprint.findex.dto.response.ResponseCursorDto;
 import com.sprint.findex.entity.IndexInfo;
 import jakarta.persistence.criteria.CriteriaBuilder;

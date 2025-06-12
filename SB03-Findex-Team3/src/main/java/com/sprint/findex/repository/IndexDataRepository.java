@@ -17,7 +17,7 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
     Optional<IndexData> findTopByIndexInfoIdOrderByBaseDateDesc(Long id);
 
     Optional<IndexData> findByIndexInfoAndBaseDate(IndexInfo indexInfo, LocalDate baseDate);
-
+      
     @Query(value = "SELECT * FROM index_data i " +
         "WHERE i.index_info_id = :indexInfoId " +
         "AND i.base_date <= :baseDate " +

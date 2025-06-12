@@ -4,17 +4,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.findex.dto.request.AutoSyncQueryParams;
 import com.sprint.findex.entity.AutoSyncConfig;
 import com.sprint.findex.entity.IndexInfo;
-import jakarta.persistence.criteria.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
+@Slf4j
 public class AutoSyncConfigSpecifications {
-
-    private static final Logger log = LoggerFactory.getLogger(AutoSyncConfigSpecifications.class);
 
     private static final String DEFAULT_SORT_FIELD = "indexInfo.indexName";
     private static final String DEFAULT_SORT_DIRECTION = "asc";

@@ -1,5 +1,6 @@
-package com.sprint.findex.dto.response;
+package com.sprint.findex.dto.response.cursor;
 
+import com.sprint.findex.dto.response.SyncJobDto;
 import java.util.List;
 
 public record CursorPageResponseSyncJobDto(

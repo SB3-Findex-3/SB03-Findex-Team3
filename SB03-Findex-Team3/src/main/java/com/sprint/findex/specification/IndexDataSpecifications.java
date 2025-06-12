@@ -3,14 +3,20 @@ package com.sprint.findex.specification;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.findex.dto.request.IndexDataQueryParams;
 import com.sprint.findex.entity.IndexData;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.*;
 
 @Slf4j
 public class IndexDataSpecifications {
@@ -65,12 +71,12 @@ public class IndexDataSpecifications {
                     yield buildCursorPredicate(cb, root, sortField, cursorVal, idAfter, isAsc);
                 }
                 default -> {
-                    log.warn("⚠️ 지원하지 않는 정렬 필드: {}", sortField);
+                    log.warn("[IndexDataSpecifications] 지원하지 않는 정렬 필드: {}", sortField);
                     yield cb.greaterThan(root.get("id"), idAfter);
                 }
             };
         } catch (Exception e) {
-            log.error("❌ 커서 파싱 실패: {}", e.getMessage());
+            log.error("[IndexDataSpecifications] 커서 파싱 실패: {}", e.getMessage());
             return null;
         }
     }

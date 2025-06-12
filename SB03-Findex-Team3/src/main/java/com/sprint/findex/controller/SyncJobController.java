@@ -1,9 +1,10 @@
 package com.sprint.findex.controller;
 
+import com.sprint.findex.controller.api.SyncJobApi;
 import com.sprint.findex.dto.request.IndexDataSyncRequest;
 import com.sprint.findex.dto.request.SyncJobQueryParams;
-import com.sprint.findex.dto.response.CursorPageResponseSyncJobDto;
 import com.sprint.findex.dto.response.SyncJobDto;
+import com.sprint.findex.dto.response.cursor.CursorPageResponseSyncJobDto;
 import com.sprint.findex.entity.SyncJobResult;
 import com.sprint.findex.entity.SyncJobType;
 import com.sprint.findex.global.util.IpUtil;
@@ -30,7 +31,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/sync-jobs")
 @RequiredArgsConstructor
-public class SyncJobController {
+public class SyncJobController implements SyncJobApi {
 
     private final SyncJobService syncJobService;
     private final SyncJobQueryParamsMapper syncJobQueryParamsMapper;
@@ -43,11 +44,10 @@ public class SyncJobController {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(result.block());
-
     }
 
     @PostMapping("index-data")
-    public ResponseEntity<List<SyncJobDto>> syncIndexInfo(
+    public ResponseEntity<List<SyncJobDto>> syncIndexInfos(
         @Valid @RequestBody IndexDataSyncRequest request, HttpServletRequest httpRequest) {
 
         String workerIp = IpUtil.getClientIp(httpRequest);
@@ -80,6 +80,8 @@ public class SyncJobController {
         );
 
         CursorPageResponseSyncJobDto response = syncJobService.findSyncJobByCursor(syncParams);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(response);
     }
 }

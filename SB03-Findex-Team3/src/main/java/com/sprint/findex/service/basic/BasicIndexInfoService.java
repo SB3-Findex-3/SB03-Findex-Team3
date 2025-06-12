@@ -54,11 +54,6 @@ public class BasicIndexInfoService implements IndexInfoService {
     }
 
     @Override
-    public IndexInfo createIndexInfoFromApi(IndexInfoCreateCommand command) {
-        return null;
-    }
-
-    @Override
     @Transactional
     public IndexInfoDto updateIndexInfo(Long id, IndexInfoUpdateRequest updateDto){
         IndexInfo indexInfo = indexInfoRepository.findById(id)

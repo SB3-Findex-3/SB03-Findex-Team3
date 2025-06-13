@@ -20,8 +20,6 @@
 ## Findex
 
 ![전체샷](https://github.com/user-attachments/assets/bc2dec93-05f1-4ca9-815f-c074dbe23c0e)
-![전체샷](https://github.com/user-attachments/assets/bc2dec93-05f1-4ca9-815f-c074dbe23c0e)
-![전체샷](https://github.com/user-attachments/assets/bc2dec93-05f1-4ca9-815f-c074dbe23c0e)
 
 
 - 가볍고 빠른 외부 API 연동 금융 분석 도구
@@ -75,8 +73,6 @@
 
 ## 김현기
 
-![대시보드](https://github.com/user-attachments/assets/bd56b499-c22b-4f08-a55f-ecce17a4c552)
-![대시보드](https://github.com/user-attachments/assets/bd56b499-c22b-4f08-a55f-ecce17a4c552)
 ![대시보드](https://github.com/user-attachments/assets/bd56b499-c22b-4f08-a55f-ecce17a4c552)
 
 

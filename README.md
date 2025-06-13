@@ -105,7 +105,7 @@
 
 ## 이채원
 
-![자동연동.PNG](attachment:a22a5b32-771f-4eed-8ee7-97291567c062:자동연동.png)
+![image](https://github.com/user-attachments/assets/792810bd-b856-42e0-902a-053ea21d87ee)
 
 - 지수 데이터 목록 조회
     - **{지수}, {날짜}**로 지수 데이터 목록을 조회할 수 있습니다.

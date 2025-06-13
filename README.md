@@ -19,7 +19,10 @@
 
 ## Findex
 
-![Findex.PNG](attachment:4d3e7abe-5123-401d-8bc9-bfc4c4607243:Findex.png)
+![전체샷](https://github.com/user-attachments/assets/bc2dec93-05f1-4ca9-815f-c074dbe23c0e)
+![전체샷](https://github.com/user-attachments/assets/bc2dec93-05f1-4ca9-815f-c074dbe23c0e)
+![전체샷](https://github.com/user-attachments/assets/bc2dec93-05f1-4ca9-815f-c074dbe23c0e)
+
 
 - 가볍고 빠른 외부 API 연동 금융 분석 도구
 - 금융 지수 데이터를 한눈에 제공하는 대시보드 서비스
@@ -72,7 +75,10 @@
 
 ## 김현기
 
-![지수정보.PNG](attachment:6eff65f6-bbea-4e78-9ce5-ebc22066c99a:지수정보.png)
+![대시보드](https://github.com/user-attachments/assets/bd56b499-c22b-4f08-a55f-ecce17a4c552)
+![대시보드](https://github.com/user-attachments/assets/bd56b499-c22b-4f08-a55f-ecce17a4c552)
+![대시보드](https://github.com/user-attachments/assets/bd56b499-c22b-4f08-a55f-ecce17a4c552)
+
 
 - 지수 정보 등록
     - **지수 정보 등록**
@@ -330,8 +336,12 @@ src
 
 ## 구현 홈페이지
 
+https://sb03-findex-team3-production.up.railway.app/#/dashboard
+
 ---
 
 ## 프로젝트 회고록
+
+https://www.notion.so/ohgiraffers/3-4L-211649136c118021a909c72c8875362f
 
 ---

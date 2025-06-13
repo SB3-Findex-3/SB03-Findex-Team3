@@ -44,7 +44,7 @@
 
 ## 강우진
 
-![지수 데이터.PNG](attachment:e23484e9-a4ef-4126-b508-d93d6afda488:지수_데이터.png)
+![image](https://github.com/user-attachments/assets/70dcfc78-7ffa-4adc-9f3a-c0358cf78d5c)
 
 - 지수 데이터 등록
     - **{지수}**, **{날짜}**부터 **{상장 시가 총액}**까지 모든 속성을 입력해 지수 데이터를 등록할 수 있습니다.

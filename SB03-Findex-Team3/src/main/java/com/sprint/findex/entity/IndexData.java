@@ -1,5 +1,7 @@
 package com.sprint.findex.entity;
 
+import static org.hibernate.annotations.OnDeleteAction.CASCADE;
+
 import com.sprint.findex.dto.request.IndexDataCreateRequest;
 import com.sprint.findex.dto.request.IndexDataUpdateRequest;
 import com.sprint.findex.entity.base.BaseEntity;
@@ -17,6 +19,57 @@ import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+
+//@Entity
+//@Table(
+//    name = "index_data",
+//    uniqueConstraints = {
+//        @UniqueConstraint(columnNames = {"index_info_id", "base_date"})
+//    }
+//)
+//@Getter
+//@NoArgsConstructor(access = AccessLevel.PROTECTED)
+//public class IndexData extends BaseEntity {
+//
+//    @ManyToOne
+//    @JoinColumn(name = "index_info_id", nullable = false)
+//    private IndexInfo indexInfo;
+//
+//    @Column(name = "base_date", nullable = false)
+//    private LocalDate baseDate;
+//
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "source_type", nullable = false)
+//    private SourceType sourceType;
+//
+//    @Column(name = "market_price", precision = 10, scale = 2)
+//    private BigDecimal marketPrice;
+//
+//    @Column(name = "closing_price", precision = 10, scale = 2)
+//    private BigDecimal closingPrice;
+//
+//    @Column(name = "high_price", precision = 10, scale = 2)
+//    private BigDecimal highPrice;
+//
+//    @Column(name = "low_price", precision = 10, scale = 2)
+//    private BigDecimal lowPrice;
+//
+//    @Column(name = "versus", precision = 10, scale = 2)
+//    private BigDecimal versus;
+//
+//    @Column(name = "fluctuation_rate", precision = 10, scale = 2)
+//    private BigDecimal fluctuationRate;
+//
+//    @Column(name = "trading_quantity")
+//    private Long tradingQuantity;
+//
+//    @Column(name = "trading_price")
+//    private Long tradingPrice;
+//
+//    @Column(name = "market_total_amount")
+//    private Long marketTotalAmount;
+
 
 @Entity
 @Table(
@@ -31,31 +84,32 @@ public class IndexData extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "index_info_id", nullable = false)
+    @OnDelete(action = CASCADE)
     private IndexInfo indexInfo;
 
     @Column(name = "base_date", nullable = false)
     private LocalDate baseDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "source_type", nullable = false)
+    @Column(name = "source_type", length = 20, nullable = false)
     private SourceType sourceType;
 
-    @Column(name = "market_price", precision = 10, scale = 2)
+    @Column(name = "market_price")
     private BigDecimal marketPrice;
 
-    @Column(name = "closing_price", precision = 10, scale = 2)
+    @Column(name = "closing_price")
     private BigDecimal closingPrice;
 
-    @Column(name = "high_price", precision = 10, scale = 2)
+    @Column(name = "high_price")
     private BigDecimal highPrice;
 
-    @Column(name = "low_price", precision = 10, scale = 2)
+    @Column(name = "low_price")
     private BigDecimal lowPrice;
 
-    @Column(name = "versus", precision = 10, scale = 2)
+    @Column(name = "versus")
     private BigDecimal versus;
 
-    @Column(name = "fluctuation_rate", precision = 10, scale = 2)
+    @Column(name = "fluctuation_rate")
     private BigDecimal fluctuationRate;
 
     @Column(name = "trading_quantity")
@@ -66,6 +120,7 @@ public class IndexData extends BaseEntity {
 
     @Column(name = "market_total_amount")
     private Long marketTotalAmount;
+
 
     public IndexData(IndexInfo indexInfo, LocalDate baseDate, SourceType sourceType,
         BigDecimal marketPrice, BigDecimal closingPrice, BigDecimal highPrice, BigDecimal lowPrice,

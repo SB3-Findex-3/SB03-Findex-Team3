@@ -49,7 +49,7 @@ public class SyncJobController implements SyncJobApi {
     @PostMapping("index-infos")
     public ResponseEntity<List<SyncJobDto>> syncIndexInfoAsync(HttpServletRequest httpRequest) {
         String clientIp = IpUtil.getClientIp(httpRequest);
-        List<SyncJobDto> result = syncJobService.fetchAllIndexInfo(clientIp);  // .block() 제거
+        List<SyncJobDto> result = syncJobService.fetchAllIndexInfo(clientIp);
 
         return ResponseEntity
             .status(HttpStatus.OK)

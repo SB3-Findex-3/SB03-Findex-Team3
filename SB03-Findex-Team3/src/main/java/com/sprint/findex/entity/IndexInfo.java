@@ -21,10 +21,10 @@ import lombok.NoArgsConstructor;
 @Entity
 public class IndexInfo extends BaseEntity {
 
-    @Column(name = "index_classification", length = 240, unique = true, nullable = false)
+    @Column(name = "index_classification", length = 240, nullable = false)
     private String indexClassification;
 
-    @Column(name = "index_name", length = 240, unique = true, nullable = false)
+    @Column(name = "index_name", length = 240, nullable = false)
     private String indexName;
 
     @Column(name = "employed_items_count", nullable = false)
@@ -33,7 +33,7 @@ public class IndexInfo extends BaseEntity {
     @Column(name = "base_point_in_time", nullable = false)
     private LocalDate basePointInTime;
 
-    @Column(name = "base_index", nullable = false)
+    @Column(name = "base_index", precision = 10, scale = 2, nullable = false)
     private BigDecimal baseIndex;
 
     @Enumerated(EnumType.STRING)
@@ -70,23 +70,23 @@ public class IndexInfo extends BaseEntity {
         this.indexClassification = indexClassification;
     }
 
-    public void  updateIndexName(String indexName) {
+    public void updateIndexName(String indexName) {
         this.indexName = indexName;
     }
 
-    public void  updateEmployedItemsCount(int employedItemsCount) {
+    public void updateEmployedItemsCount(int employedItemsCount) {
         this.employedItemsCount = employedItemsCount;
     }
 
-    public void  updateBasePointInTime(LocalDate basePointInTime) {
+    public void updateBasePointInTime(LocalDate basePointInTime) {
         this.basePointInTime = basePointInTime;
     }
 
-    public void  updateBaseIndex(BigDecimal baseIndex) {
+    public void updateBaseIndex(BigDecimal baseIndex) {
         this.baseIndex = baseIndex;
     }
 
-    public void  updateFavorite(Boolean favorite) {
+    public void updateFavorite(Boolean favorite) {
         this.favorite = favorite;
     }
 

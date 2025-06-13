@@ -170,7 +170,7 @@
 
 ## 임정현
 
-![연동관리.PNG](attachment:09b06a29-49c9-4e48-a01f-1ae62dc32eb5:연동관리.png)
+![image](https://github.com/user-attachments/assets/4b4663f2-69ea-4a24-a932-87c248b2fd6e)
 
 - 연동 정보
     - 연동 작업은 다음의 정보를 가집니다.

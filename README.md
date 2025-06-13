@@ -105,7 +105,7 @@
 
 ## 이채원
 
-![image](https://github.com/user-attachments/assets/792810bd-b856-42e0-902a-053ea21d87ee)
+![image](https://github.com/user-attachments/assets/11a0407e-6648-411d-88fe-97fdab96e552)
 
 - 지수 데이터 목록 조회
     - **{지수}, {날짜}**로 지수 데이터 목록을 조회할 수 있습니다.
